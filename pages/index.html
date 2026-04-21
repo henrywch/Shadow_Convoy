@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Convoy — Vehicle Co-Movement Mining</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Google Fonts (self-hosted fallback via @import in CSS) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+</head>
+<body>
+
+<!-- ── Overlays ───────────────────────────────────────────── -->
+<div class="scanline"></div>
+<div id="scroll-progress"></div>
+
+<!-- ── Nav Dots ──────────────────────────────────────────── -->
+<nav class="nav-dots" aria-label="Section navigation">
+  <button class="nav-dot active" data-section="hero"    data-label="INTRO"></button>
+  <button class="nav-dot"        data-section="problem" data-label="PROBLEM"></button>
+  <button class="nav-dot"        data-section="data"    data-label="DATA"></button>
+  <button class="nav-dot"        data-section="algo"    data-label="ALGORITHM"></button>
+  <button class="nav-dot"        data-section="results" data-label="RESULTS"></button>
+  <button class="nav-dot"        data-section="infra"   data-label="INFRA"></button>
+  <button class="nav-dot"        data-section="scale"   data-label="SCALE"></button>
+  <button class="nav-dot"        data-section="outro"   data-label="END"></button>
+</nav>
+
+<div id="page-wrapper">
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 0 — HERO
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" id="hero">
+  <div class="grid-bg"></div>
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="hero-content">
+    <p class="section-label">Big Data Project · CPJS 2025</p>
+
+    <h1 class="glitch" data-text="SHADOW CONVOY">SHADOW CONVOY</h1>
+
+    <p class="hero-subtitle">Mining Spatiotemporal Co-Movement from 275M Traffic Records</p>
+
+    <div class="hero-stats fade-up">
+      <div class="stat-box">
+        <span class="stat-value">275.9M</span>
+        <span class="stat-label">Total Records</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value">~22M</span>
+        <span class="stat-label">Unique Plates</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value">977</span>
+        <span class="stat-label">Checkpoints</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value">31</span>
+        <span class="stat-label">Days of Data</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 1 — THE PROBLEM
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" id="problem">
+  <div class="content-grid">
+
+    <!-- Terminal -->
+    <div class="terminal-box fade-up">
+      <div class="terminal-bar">
+        <span class="t-dot red"></span>
+        <span class="t-dot yellow"></span>
+        <span class="t-dot green"></span>
+        <span class="terminal-title">cluster@node-0 ~ spark-submit</span>
+      </div>
+      <div class="terminal-body">
+        <!-- Lines injected by JS typewriter -->
+      </div>
+    </div>
+
+    <!-- Text -->
+    <div class="problem-text fade-up">
+      <p class="section-label">01 / The Problem</p>
+      <h2>Find The <span class="neon-pink">Shadows</span></h2>
+
+      <div class="definition-box">
+        Two vehicles are <strong>accompanying</strong> if they appear at the
+        <strong>same checkpoint</strong> within a <strong>300-second window</strong>
+        at least <strong>10 times</strong> across 31 days.
+      </div>
+
+      <div class="constraints">
+        <div class="constraint-item fade-up">
+          <span class="c-icon">M</span>
+          <span>5 nodes · 8 cores · 8 GB RAM each — severe memory constraints</span>
+        </div>
+        <div class="constraint-item fade-up">
+          <span class="c-icon">D</span>
+          <span>~200 GB total cluster storage — cannot materialise all pairs</span>
+        </div>
+        <div class="constraint-item fade-up">
+          <span class="c-icon">S</span>
+          <span>Self-join on dense buckets → O(N²) candidate explosion</span>
+        </div>
+        <div class="constraint-item fade-up">
+          <span class="c-icon">B</span>
+          <span>Boundary effect — pairs split across time bucket edges are missed</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 2 — DATA ANALYSIS
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" id="data">
+  <div style="width:100%;max-width:1100px;">
+    <p class="section-label fade-up">02 / Data Analysis</p>
+    <h2 class="fade-up">Bucket <span class="neon-cyan">Density</span> by Window Size</h2>
+
+    <div class="chart-container fade-up">
+      <div class="chart-header">
+        <p style="font-size:13px;color:var(--text-dim);">
+          Global peak records per bucket vs. hotspot (Location #31)
+        </p>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--cyan);"></div>
+            <span style="color:var(--text-dim);font-size:12px;">Global Max</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--pink);"></div>
+            <span style="color:var(--text-dim);font-size:12px;">Hotspot #31</span>
+          </div>
+        </div>
+      </div>
+
+      <svg id="chart-svg" height="280"></svg>
+
+      <div class="hotspot-badge fade-up">
+        <span class="badge-icon">⚠</span>
+        <span>
+          Location <strong style="color:var(--cyan)">#31</strong> reaches
+          <strong class="neon-pink">23,595 records</strong> in a single 300s bucket
+          — generating up to <strong class="neon-cyan">556M pair candidates</strong>
+          from a naive O(N²) self-join.
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 3 — ALGORITHM EVOLUTION
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" id="algo" style="padding-left:0;padding-right:0;">
+  <div class="section-header" style="padding:0 60px;width:100%;">
+    <p class="section-label fade-up">03 / Algorithm Evolution</p>
+    <h2 class="fade-up">From Brute Force to <span class="neon-green">Plane Sweep</span></h2>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:0;" class="fade-up">
+      Hover cards · scroll to explore timeline →
+    </p>
+  </div>
+
+  <div class="algo-outer">
+    <div class="algo-track" id="algo-track">
+
+      <!-- V1 -->
+      <div class="algo-card fade-up" data-version="V1">
+        <h3>Scala Brute Force</h3>
+        <div class="algo-meta">
+          <span class="algo-tag lang-scala">Scala</span>
+          <span class="algo-tag status-done">Completed</span>
+        </div>
+        <p class="algo-desc">
+          Global collect_list + UDF combinations(2). Works on small samples;
+          OOM on full 275M dataset due to unbounded shuffle.
+        </p>
+        <div class="complexity-bar">
+          <div class="complexity-label">
+            <span>Complexity</span><span>O(N²) per bucket</span>
+          </div>
+          <div class="complexity-track">
+            <div class="complexity-fill fill-red" style="width:100%"></div>
+          </div>
+        </div>
+        <div class="code-snippet">
+          <span class="kw">val</span> pairs = grouped<br>
+          &nbsp;&nbsp;.<span class="fn">agg</span>(<span class="fn">collect_list</span>(<span class="str">"plate"</span>))<br>
+          &nbsp;&nbsp;.<span class="fn">withColumn</span>(<span class="str">"pair"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">explode</span>(<span class="fn">generatePairsUDF</span>($<span class="str">"plates"</span>)))
+        </div>
+      </div>
+
+      <div class="algo-connector">→</div>
+
+      <!-- V2 -->
+      <div class="algo-card fade-up" data-version="V2">
+        <h3>Iterative Chunking</h3>
+        <div class="algo-meta">
+          <span class="algo-tag lang-scala">Scala</span>
+          <span class="algo-tag status-done">Completed</span>
+        </div>
+        <p class="algo-desc">
+          Processes data in 0.25h micro-batches. Overlapping buckets
+          (+1 shift) solve boundary effect. Midpoint ownership deduplicates.
+        </p>
+        <div class="complexity-bar">
+          <div class="complexity-label">
+            <span>Complexity</span><span>O(N²) — bounded chunk</span>
+          </div>
+          <div class="complexity-track">
+            <div class="complexity-fill fill-orange" style="width:80%"></div>
+          </div>
+        </div>
+        <div class="code-snippet">
+          <span class="cmt">// Boundary fix: duplicate each record</span><br>
+          .<span class="fn">withColumn</span>(<span class="str">"bucket"</span>,<br>
+          &nbsp;&nbsp;<span class="fn">explode</span>(<span class="fn">array</span>(base, base+<span class="str">1</span>)))<br>
+          <span class="cmt">// Ownership: midpoint check</span><br>
+          .<span class="fn">filter</span>(midpoint &gt;= chunkStart)
+        </div>
+      </div>
+
+      <div class="algo-connector">→</div>
+
+      <!-- V3 -->
+      <div class="algo-card fade-up" data-version="V3">
+        <h3>Waterfall Aggregation</h3>
+        <div class="algo-meta">
+          <span class="algo-tag lang-python">Python</span>
+          <span class="algo-tag status-done">Completed</span>
+        </div>
+        <p class="algo-desc">
+          Hierarchical compaction: 10 Raw → 1 L1 → 10 L1 → 1 L2.
+          Intermediate files deleted on-the-fly. Disk stays under 200 GB.
+        </p>
+        <div class="complexity-bar">
+          <div class="complexity-label">
+            <span>Disk Pressure</span><span>Controlled</span>
+          </div>
+          <div class="complexity-track">
+            <div class="complexity-fill fill-yellow" style="width:55%"></div>
+          </div>
+        </div>
+        <div class="code-snippet">
+          <span class="kw">class</span> <span class="fn">WaterfallAggregator</span>:<br>
+          &nbsp;&nbsp;<span class="kw">def</span> <span class="fn">add_raw_chunk</span>(self, df):<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> <span class="fn">len</span>(pending) &gt;= l1_threshold:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.<span class="fn">_compact_level_1</span>()
+        </div>
+      </div>
+
+      <div class="algo-connector">→</div>
+
+      <!-- V4 -->
+      <div class="algo-card fade-up" data-version="V4">
+        <h3>FP-Growth Mining</h3>
+        <div class="algo-meta">
+          <span class="algo-tag lang-python">Python</span>
+          <span class="algo-tag status-done">Completed</span>
+        </div>
+        <p class="algo-desc">
+          MLlib FPGrowth on (location, bucket) transactions. Dual-grid
+          (0 + window/2 offset) handles boundaries. Finds convoy groups ≥ 2.
+        </p>
+        <div class="complexity-bar">
+          <div class="complexity-label">
+            <span>Scalability</span><span>Sub-quadratic</span>
+          </div>
+          <div class="complexity-track">
+            <div class="complexity-fill fill-cyan" style="width:40%"></div>
+          </div>
+        </div>
+        <div class="code-snippet">
+          fp = <span class="fn">FPGrowth</span>(itemsCol=<span class="str">"items"</span>,<br>
+          &nbsp;&nbsp;minSupport=local_min_support)<br>
+          model = fp.<span class="fn">fit</span>(transactions)<br>
+          model.freqItemsets.<span class="fn">filter</span>(size &gt;= <span class="str">2</span>)
+        </div>
+      </div>
+
+      <div class="algo-connector" style="color:var(--green)">→</div>
+
+      <!-- V5 PLANNED -->
+      <div class="algo-card planned fade-up" data-version="V5 ★">
+        <h3>Plane Sweep + MinHash</h3>
+        <div class="algo-meta">
+          <span class="algo-tag lang-python">Python</span>
+          <span class="algo-tag status-plan">Planned</span>
+        </div>
+        <p class="algo-desc">
+          PandasUDF sort-then-sweep eliminates self-join entirely.
+          MinHash LSH pre-filters stranger pairs globally. Zero data duplication.
+        </p>
+        <div class="complexity-bar">
+          <div class="complexity-label">
+            <span>Complexity</span><span>O(N log N + N·k)</span>
+          </div>
+          <div class="complexity-track">
+            <div class="complexity-fill fill-green" style="width:18%"></div>
+          </div>
+        </div>
+        <div class="code-snippet">
+          <span class="cmt"># Zero duplication — sort & sweep</span><br>
+          pdf = pdf.<span class="fn">sort_values</span>(<span class="str">'timestamp'</span>)<br>
+          <span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(n):<br>
+          &nbsp;&nbsp;<span class="kw">while</span> t[right]-t[left] &gt; W: left+=<span class="str">1</span>
+        </div>
+      </div>
+
+      <div class="algo-connector" style="color:var(--green)">→</div>
+
+      <!-- V6 PLANNED -->
+      <div class="algo-card planned fade-up" data-version="V6 ★">
+        <h3>GraphFrames Convoy Groups</h3>
+        <div class="algo-meta">
+          <span class="algo-tag lang-python">Python</span>
+          <span class="algo-tag status-plan">Planned</span>
+        </div>
+        <p class="algo-desc">
+          Promote pairs → graph edges. Connected components find multi-car
+          convoy groups. Label propagation discovers dense convoy communities.
+        </p>
+        <div class="complexity-bar">
+          <div class="complexity-label">
+            <span>Output Richness</span><span>Groups not just pairs</span>
+          </div>
+          <div class="complexity-track">
+            <div class="complexity-fill fill-green" style="width:12%"></div>
+          </div>
+        </div>
+        <div class="code-snippet">
+          g = <span class="fn">GraphFrame</span>(vertices, edges)<br>
+          components = g.<span class="fn">connectedComponents</span>()<br>
+          communities = g.<span class="fn">labelPropagation</span>(<br>
+          &nbsp;&nbsp;maxIter=<span class="str">5</span>)
+        </div>
+      </div>
+
+    </div><!-- /algo-track -->
+  </div><!-- /algo-outer -->
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 4 — RESULTS
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" id="results">
+  <p class="section-label fade-up">04 / Results</p>
+  <h2 class="fade-up">Convoy <span class="neon-cyan">Pairs</span> Detected</h2>
+
+  <div class="results-grid">
+
+    <!-- Table -->
+    <div class="fade-up">
+      <div class="results-table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Vehicle A</th>
+              <th>Vehicle B</th>
+              <th>Co-Occurrences</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="rank-1">
+              <td class="rank">01</td>
+              <td>16970573</td><td>3271142</td>
+              <td class="count">1,119,848</td>
+            </tr>
+            <tr class="rank-2">
+              <td class="rank">02</td>
+              <td>17210840</td><td>17210845</td>
+              <td class="count">653,795</td>
+            </tr>
+            <tr class="rank-3">
+              <td class="rank">03</td>
+              <td>17207389</td><td>17210840</td>
+              <td class="count">494,458</td>
+            </tr>
+            <tr>
+              <td class="rank">04</td>
+              <td>3271142</td><td>3542309</td>
+              <td class="count">461,288</td>
+            </tr>
+            <tr>
+              <td class="rank">05</td>
+              <td>1070324</td><td>11813862</td>
+              <td class="count">410,185</td>
+            </tr>
+            <tr>
+              <td class="rank">06</td>
+              <td>3271142</td><td>511670</td>
+              <td class="count">364,396</td>
+            </tr>
+            <tr>
+              <td class="rank">07</td>
+              <td>16970573</td><td>3542309</td>
+              <td class="count">299,546</td>
+            </tr>
+            <tr>
+              <td class="rank">08</td>
+              <td>16972992</td><td>3271142</td>
+              <td class="count">257,498</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="results-stats">
+      <div class="big-counter fade-up">
+        <span class="counter-value" id="total-pairs-counter">0</span>
+        <span class="counter-label">Convoy Pairs Found (≥ 10 co-occurrences)</span>
+      </div>
+
+      <div class="big-counter fade-up" style="border-top-color:var(--pink);">
+        <span class="counter-value neon-pink" id="top-count-counter">0</span>
+        <span class="counter-label">Top Pair Co-Occurrence Count</span>
+      </div>
+
+      <div class="top-pair-viz fade-up">
+        <h3 style="font-size:12px;margin-bottom:16px;color:var(--text-dim);letter-spacing:2px;">
+          TOP 8 PAIRS — RELATIVE FREQUENCY
+        </h3>
+        <div class="pair-row">
+          <span class="pair-id">16970573<br>↔ 3271142</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill"></div></div>
+          <span class="pair-count">1.12M</span>
+        </div>
+        <div class="pair-row">
+          <span class="pair-id">17210840<br>↔ 17210845</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill"></div></div>
+          <span class="pair-count">653K</span>
+        </div>
+        <div class="pair-row">
+          <span class="pair-id">17207389<br>↔ 17210840</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill"></div></div>
+          <span class="pair-count">494K</span>
+        </div>
+        <div class="pair-row">
+          <span class="pair-id">3271142<br>↔ 3542309</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill"></div></div>
+          <span class="pair-count">461K</span>
+        </div>
+        <div class="pair-row">
+          <span class="pair-id">1070324<br>↔ 11813862</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill"></div></div>
+          <span class="pair-count">410K</span>
+        </div>
+        <div class="pair-row">
+          <span class="pair-id">3271142<br>↔ 511670</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill"></div></div>
+          <span class="pair-count">364K</span>
+        </div>
+        <div class="pair-row">
+          <span class="pair-id">16970573<br>↔ 3542309</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill"></div></div>
+          <span class="pair-count">300K</span>
+        </div>
+        <div class="pair-row">
+          <span class="pair-id">16972992<br>↔ 3271142</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill"></div></div>
+          <span class="pair-count">257K</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 5 — INFRASTRUCTURE
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" id="infra">
+  <p class="section-label fade-up">05 / Infrastructure</p>
+  <h2 class="fade-up">Slurm <span class="neon-cyan">→</span> Dynamic Hadoop Cluster</h2>
+
+  <div class="infra-grid">
+
+    <!-- SVG Cluster Diagram -->
+    <div class="cluster-diagram fade-up">
+      <svg viewBox="0 0 480 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glow-c">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-p">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Connection lines (drawn first so nodes appear on top) -->
+        <!-- Master to workers -->
+        <line class="conn-line" x1="240" y1="130" x2="100" y2="250"/>
+        <line class="conn-line" x1="240" y1="130" x2="200" y2="260"/>
+        <line class="conn-line" x1="240" y1="130" x2="300" y2="260"/>
+        <line class="conn-line" x1="240" y1="130" x2="380" y2="250"/>
+        <!-- Login → Master -->
+        <line class="conn-line" x1="240" y1="50"  x2="240" y2="100" stroke-dasharray="6 3"/>
+
+        <!-- Login Node (top) -->
+        <g class="cluster-node-group" style="opacity:0;transform:scale(0.5);transform-origin:240px 50px;transition:all 0.5s">
+          <rect x="185" y="30" width="110" height="38" rx="4"
+                fill="#0d0d1a" stroke="#556080" stroke-width="1"/>
+          <text x="240" y="53" class="node-label" font-size="11">LOGIN NODE</text>
+        </g>
+
+        <!-- Master Node (center) -->
+        <g class="cluster-node-group master-node" style="opacity:0;transform:scale(0.5);transform-origin:240px 115px;transition:all 0.5s 0.2s">
+          <circle cx="240" cy="115" r="36"
+                  fill="#0d0d22" stroke="#00f5ff" stroke-width="2"
+                  filter="url(#glow-p)" class="node-circle"/>
+          <text x="240" y="110" class="node-label master-label" font-size="10">NODE 0</text>
+          <text x="240" y="124" class="node-label master-label" font-size="9">NameNode</text>
+          <text x="240" y="137" class="node-label" font-size="8" fill="#556080">Spark Master</text>
+        </g>
+
+        <!-- Worker nodes -->
+        <g class="cluster-node-group" style="opacity:0;transform:scale(0.5);transform-origin:100px 270px;transition:all 0.5s 0.4s">
+          <circle cx="100" cy="270" r="28"
+                  fill="#0d0d1a" stroke="#ff00ff" stroke-width="1.5"
+                  filter="url(#glow-c)" class="node-circle"/>
+          <text x="100" y="266" class="node-label" font-size="10">NODE 1</text>
+          <text x="100" y="279" class="node-label" font-size="8" fill="#556080">DataNode</text>
+        </g>
+
+        <g class="cluster-node-group" style="opacity:0;transform:scale(0.5);transform-origin:200px 275px;transition:all 0.5s 0.6s">
+          <circle cx="200" cy="275" r="28"
+                  fill="#0d0d1a" stroke="#ff00ff" stroke-width="1.5"
+                  filter="url(#glow-c)" class="node-circle"/>
+          <text x="200" y="271" class="node-label" font-size="10">NODE 2</text>
+          <text x="200" y="284" class="node-label" font-size="8" fill="#556080">DataNode</text>
+        </g>
+
+        <g class="cluster-node-group" style="opacity:0;transform:scale(0.5);transform-origin:300px 275px;transition:all 0.5s 0.8s">
+          <circle cx="300" cy="275" r="28"
+                  fill="#0d0d1a" stroke="#ff00ff" stroke-width="1.5"
+                  filter="url(#glow-c)" class="node-circle"/>
+          <text x="300" y="271" class="node-label" font-size="10">NODE 3</text>
+          <text x="300" y="284" class="node-label" font-size="8" fill="#556080">DataNode</text>
+        </g>
+
+        <g class="cluster-node-group" style="opacity:0;transform:scale(0.5);transform-origin:380px 270px;transition:all 0.5s 1.0s">
+          <circle cx="380" cy="270" r="28"
+                  fill="#0d0d1a" stroke="#ff00ff" stroke-width="1.5"
+                  filter="url(#glow-c)" class="node-circle"/>
+          <text x="380" y="266" class="node-label" font-size="10">NODE 4</text>
+          <text x="380" y="279" class="node-label" font-size="8" fill="#556080">DataNode</text>
+        </g>
+
+        <!-- SLURM label -->
+        <text x="240" y="385" text-anchor="middle" font-family="JetBrains Mono"
+              font-size="10" fill="#556080" letter-spacing="3">
+          SLURM-ALLOCATED · 5 NODES · 8 CORES · 8 GB
+        </text>
+      </svg>
+    </div>
+
+    <!-- Details -->
+    <div class="infra-details">
+      <div class="infra-card fade-up">
+        <h3 class="neon-cyan">Dynamic Config Injection</h3>
+        <p>No hardcoded IPs. Slurm exposes <code>$SLURM_NODELIST</code>;
+           the launch script parses hostnames at runtime and writes
+           <code>core-site.xml</code>, <code>hdfs-site.xml</code>,
+           <code>yarn-site.xml</code> before any daemon starts.</p>
+        <div class="slurm-flow" style="margin-top:12px;">
+          <div class="flow-step">sbatch cluster_launch.sh</div>
+          <div class="flow-step">scontrol → parse node hostnames</div>
+          <div class="flow-step">write Hadoop XML configs dynamically</div>
+          <div class="flow-step">scp configs to all workers</div>
+          <div class="flow-step">start HDFS NameNode + DataNodes</div>
+          <div class="flow-step">start Spark Master + Workers</div>
+          <div class="flow-step">spark-submit → job runs</div>
+          <div class="flow-step">teardown on job exit</div>
+        </div>
+      </div>
+
+      <div class="infra-card namenode fade-up">
+        <h3 class="neon-pink">No Root Required</h3>
+        <p>All processes (HDFS daemons, Spark Master/Worker) run as the
+           submitting user inside Slurm's allocated container cgroups.
+           Tmp dirs use <code>/tmp/hadoop-$USER-$SLURM_JOB_ID</code>
+           to avoid conflicts between concurrent jobs.</p>
+      </div>
+
+      <div class="infra-card spark fade-up">
+        <h3 style="color:var(--yellow);">Spark Standalone (not YARN)</h3>
+        <p>Using Spark's own standalone cluster manager avoids bootstrapping
+           a YARN ResourceManager. Workers connect directly to the
+           elected master via <code>spark://NODE0:7077</code>.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 6 — SCALING VISION
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" id="scale">
+  <p class="section-label fade-up">06 / Scaling Vision</p>
+  <h2 class="fade-up">From <span class="neon-yellow" style="color:var(--yellow)">40 GB</span>
+    to <span class="neon-green">2.75 TB</span> Total RAM</h2>
+  <p class="fade-up" style="font-size:13px;color:var(--text-dim);margin-bottom:40px;">
+    Hover / tap a card to see the Spark configuration.
+  </p>
+
+  <div class="scale-cards">
+
+    <!-- Current -->
+    <div class="scale-card-wrap fade-up">
+      <div class="scale-card-inner">
+        <div class="scale-front">
+          <span class="tier-badge tier-current">CURRENT</span>
+          <div class="tier-spec">5 × 8c / 8GB</div>
+          <div class="tier-sub">40 cores · 40 GB total</div>
+          <div class="tier-metrics">
+            <div class="tier-metric">
+              <span class="m-label">Executors</span>
+              <span class="m-value">10 (2/node)</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Exec Memory</span>
+              <span class="m-value">4 GB</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Exec Cores</span>
+              <span class="m-value">3</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Shuffle Parts</span>
+              <span class="m-value">500</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Strategy</span>
+              <span class="m-value">Waterfall + Chunking</span>
+            </div>
+          </div>
+          <span class="tier-hover-hint">HOVER FOR CONFIG →</span>
+        </div>
+        <div class="scale-back">
+          <p style="font-size:10px;color:var(--text-dim);letter-spacing:2px;margin-bottom:12px;">SPARK-SUBMIT FLAGS</p>
+          <div class="config-snippet">
+            <span class="k">--num-executors</span> <span class="v">10</span><br>
+            <span class="k">--executor-cores</span> <span class="v">3</span><br>
+            <span class="k">--executor-memory</span> <span class="v">4G</span><br>
+            <span class="k">--driver-memory</span> <span class="v">2G</span><br>
+            <span class="k">shuffle.partitions</span> <span class="v">500</span><br>
+            <span class="k">memoryOverhead</span> <span class="v">512M</span><br>
+            <span class="k">adaptive.enabled</span> <span class="v">true</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mid -->
+    <div class="scale-card-wrap fade-up">
+      <div class="scale-card-inner">
+        <div class="scale-front" style="border-top-color:var(--cyan)">
+          <span class="tier-badge tier-mid">MID TIER</span>
+          <div class="tier-spec">5 × 8c / 20GB</div>
+          <div class="tier-sub">40 cores · 100 GB total</div>
+          <div class="tier-metrics">
+            <div class="tier-metric">
+              <span class="m-label">Executors</span>
+              <span class="m-value">10 (2/node)</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Exec Memory</span>
+              <span class="m-value">8 GB</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Exec Cores</span>
+              <span class="m-value">4</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Shuffle Parts</span>
+              <span class="m-value">200</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Strategy</span>
+              <span class="m-value">Plane Sweep + MinHash</span>
+            </div>
+          </div>
+          <span class="tier-hover-hint">HOVER FOR CONFIG →</span>
+        </div>
+        <div class="scale-back">
+          <p style="font-size:10px;color:var(--text-dim);letter-spacing:2px;margin-bottom:12px;">SPARK-SUBMIT FLAGS</p>
+          <div class="config-snippet">
+            <span class="k">--num-executors</span> <span class="v">10</span><br>
+            <span class="k">--executor-cores</span> <span class="v">4</span><br>
+            <span class="k">--executor-memory</span> <span class="v">8G</span><br>
+            <span class="k">--driver-memory</span> <span class="v">4G</span><br>
+            <span class="k">shuffle.partitions</span> <span class="v">200</span><br>
+            <span class="k">memoryOverhead</span> <span class="v">1G</span><br>
+            <span class="k">adaptive.skewJoin</span> <span class="v">true</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Large -->
+    <div class="scale-card-wrap fade-up">
+      <div class="scale-card-inner">
+        <div class="scale-front" style="border-top-color:var(--green)">
+          <span class="tier-badge tier-large">LARGE TIER</span>
+          <div class="tier-spec" style="color:var(--green);text-shadow:var(--glow-green)">
+            5 × 55c / 550GB
+          </div>
+          <div class="tier-sub">275 cores · 2.75 TB total</div>
+          <div class="tier-metrics">
+            <div class="tier-metric">
+              <span class="m-label">Executors</span>
+              <span class="m-value">45 (9/node)</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Exec Memory</span>
+              <span class="m-value">55 GB</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Exec Cores</span>
+              <span class="m-value">6</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Shuffle Parts</span>
+              <span class="m-value">2000</span>
+            </div>
+            <div class="tier-metric">
+              <span class="m-label">Strategy</span>
+              <span class="m-value">Full Graph Mining</span>
+            </div>
+          </div>
+          <span class="tier-hover-hint">HOVER FOR CONFIG →</span>
+        </div>
+        <div class="scale-back">
+          <p style="font-size:10px;color:var(--text-dim);letter-spacing:2px;margin-bottom:12px;">SPARK-SUBMIT FLAGS</p>
+          <div class="config-snippet">
+            <span class="k">--num-executors</span> <span class="v">45</span><br>
+            <span class="k">--executor-cores</span> <span class="v">6</span><br>
+            <span class="k">--executor-memory</span> <span class="v">55G</span><br>
+            <span class="k">--driver-memory</span> <span class="v">20G</span><br>
+            <span class="k">shuffle.partitions</span> <span class="v">2000</span><br>
+            <span class="k">memoryOverhead</span> <span class="v">6G</span><br>
+            <span class="k">offHeap.enabled</span> <span class="v">true</span><br>
+            <span class="k">dfs.replication</span> <span class="v">3</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 7 — OUTRO
+     ═══════════════════════════════════════════════════════════ -->
+<section class="section" id="outro">
+  <div class="grid-bg"></div>
+
+  <div class="outro-glitch fade-up">SHADOW<br>CONVOY</div>
+
+  <p class="outro-tagline fade-up">
+    Big Data Mining · Distributed Systems · Cyberpunk Edition
+  </p>
+
+  <div class="outro-links fade-up">
+    <a class="cyber-btn"
+       href="https://github.com/YOUR_USERNAME/YOUR_REPO/blob/main/base/reports.md"
+       target="_blank">VIEW REPORT</a>
+    <a class="cyber-btn secondary"
+       href="https://github.com/YOUR_USERNAME/YOUR_REPO/tree/main/base/PJ_AccompanyCars/codes"
+       target="_blank">VIEW CODE</a>
+  </div>
+
+  <div class="outro-final-stat fade-up">
+    <span>1,119,848</span> co-occurrences · top convoy pair ·
+    processed in <span>~4h</span> on 5 constrained nodes
+  </div>
+</section>
+
+<!-- ── Scripts ──────────────────────────────────────────── -->
+</div><!-- /#page-wrapper -->
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

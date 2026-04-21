@@ -1,0 +1,25 @@
+name: Deploy Preview Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pages/**'
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy pages/ to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./pages
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "deploy: ${{ github.event.head_commit.message }}"
