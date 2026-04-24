@@ -52,35 +52,41 @@ function goTo(index) {
 }
 
 // ── Wheel ────────────────────────────────────────────────────
-// Allow horizontal scroll to pass through (for the algo track)
+// ── Wheel — vertical only, never horizontal ───────────────────
 window.addEventListener('wheel', (e) => {
-  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // horizontal — ignore
   e.preventDefault();
   if (isTransitioning) return;
   if (e.deltaY > 0) goTo(currentIndex + 1);
   else              goTo(currentIndex - 1);
 }, { passive: false });
 
-// Let the algo horizontal track consume its own wheel events
-const algoOuter = document.querySelector('.algo-outer');
-if (algoOuter) {
-  algoOuter.addEventListener('wheel', (e) => {
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      algoOuter.scrollLeft += e.deltaY * 1.2;
-      e.stopPropagation();
-    }
-  }, { passive: true });
+// ── Algo track constants ──────────────────────────────────────
+const algoOuter    = document.querySelector('.algo-outer');
+const ALGO_SECTION = sections.findIndex(s => s.id === 'algo');
+const CARD_STEP    = 324; // 300px card + 24px gap
+
+function algoScroll(dir) {
+  if (!algoOuter) return;
+  algoOuter.scrollBy({ left: dir * CARD_STEP, behavior: 'smooth' });
 }
 
 // ── Touch ────────────────────────────────────────────────────
+let touchStartX = 0;
 let touchStartY = 0;
 window.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 }, { passive: true });
 
 window.addEventListener('touchend', e => {
   if (isTransitioning) return;
+  const dx = touchStartX - e.changedTouches[0].clientX;
   const dy = touchStartY - e.changedTouches[0].clientY;
+  // On algo section, horizontal swipe scrolls the track
+  if (currentIndex === ALGO_SECTION && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+    algoScroll(dx > 0 ? 1 : -1);
+    return;
+  }
   if (Math.abs(dy) > 40) {
     if (dy > 0) goTo(currentIndex + 1);
     else        goTo(currentIndex - 1);
@@ -90,8 +96,11 @@ window.addEventListener('touchend', e => {
 // ── Keyboard ─────────────────────────────────────────────────
 window.addEventListener('keydown', e => {
   if (isTransitioning) return;
-  if (e.key === 'ArrowDown' || e.key === 'PageDown') goTo(currentIndex + 1);
-  if (e.key === 'ArrowUp'   || e.key === 'PageUp'  ) goTo(currentIndex - 1);
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); goTo(currentIndex + 1); }
+  if (e.key === 'ArrowUp'   || e.key === 'PageUp'  ) { e.preventDefault(); goTo(currentIndex - 1); }
+  // Left/Right: scroll algo track when on algo section, ignored elsewhere
+  if (e.key === 'ArrowRight' && currentIndex === ALGO_SECTION) { e.preventDefault(); algoScroll(1);  }
+  if (e.key === 'ArrowLeft'  && currentIndex === ALGO_SECTION) { e.preventDefault(); algoScroll(-1); }
 });
 
 // ── Nav dots click ───────────────────────────────────────────
