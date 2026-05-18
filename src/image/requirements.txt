@@ -1,0 +1,11 @@
+# Python deps required by Spark / pyspark on the cluster nodes.
+# Kept minimal — add more only when an actual job needs them.
+
+# pyspark.ml and pyspark.mllib import numpy at top level.
+numpy>=1.23,<3
+
+# pandas + pyarrow enable Arrow-accelerated toPandas() and pandas UDFs.
+# Optional today, ~free in image size, saves a rebuild the first time a job
+# uses .toPandas() or @pandas_udf.
+pandas>=2.0
+pyarrow>=14.0

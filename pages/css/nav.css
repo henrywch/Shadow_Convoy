@@ -1,0 +1,150 @@
+/* ═══════════════════════════════════════════════════════════
+   SHADOW CONVOY — Cross-page navigator
+   Three themes co-defined; tabs animate from current theme's
+   palette to the destination's palette on hover.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Three theme signatures. The two-color pair (accent + spark) is
+     what the gradient hover-bar sweeps between. */
+  --theme-dark-bg:        #0a0a0f;
+  --theme-dark-accent:    #00f5ff;
+  --theme-dark-spark:     #ff00ff;
+
+  --theme-bright-bg:      #f7f5ed;
+  --theme-bright-accent:  #0050ff;
+  --theme-bright-spark:   #ff0080;
+
+  --theme-neon-bg:        #0d0117;
+  --theme-neon-accent:    #ff00aa;
+  --theme-neon-spark:     #00ffaa;
+}
+
+/* ── current theme exports its colors to two well-known vars
+      so the nav (and any other shared component) can read them. */
+[data-theme="dark"]   { --here-accent: var(--theme-dark-accent);   --here-spark: var(--theme-dark-spark); }
+[data-theme="bright"] { --here-accent: var(--theme-bright-accent); --here-spark: var(--theme-bright-spark); }
+[data-theme="neon"]   { --here-accent: var(--theme-neon-accent);   --here-spark: var(--theme-neon-spark); }
+
+
+/* ═══════════════════════════════════════════════════════════
+   Top navigator
+   ═══════════════════════════════════════════════════════════ */
+.top-nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 56px;
+  z-index: 1000;
+  display: flex;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  letter-spacing: 4px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--bg, #0a0a0f) 70%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--here-accent) 25%, transparent);
+}
+
+.top-nav .tab {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text, #b0b8d0);
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
+  transition: color 420ms cubic-bezier(.4,0,.2,1),
+              letter-spacing 420ms cubic-bezier(.4,0,.2,1),
+              text-shadow 420ms ease;
+}
+
+/* The wipe layer — a left-to-right gradient that builds on hover.
+   --to-a / --to-b are set per-tab via the [data-theme="…"] rules below. */
+.top-nav .tab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--here-accent) 18%, transparent) 0%,
+    color-mix(in srgb, var(--here-spark)  20%, transparent) 28%,
+    color-mix(in srgb, var(--to-a)        24%, transparent) 60%,
+    color-mix(in srgb, var(--to-b)        28%, transparent) 100%);
+  transform: translateX(-100%);
+  transition: transform 600ms cubic-bezier(.4,0,.2,1);
+  z-index: -1;
+}
+
+/* The blooming underline — a tighter gradient bar that scales out. */
+.top-nav .tab::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--here-accent) 15%,
+    var(--here-spark)  35%,
+    var(--to-a)        65%,
+    var(--to-b)        85%,
+    transparent 100%);
+  opacity: 0;
+  transform: scaleX(.3);
+  transform-origin: 50% 100%;
+  transition: opacity 380ms ease,
+              transform 600ms cubic-bezier(.4,0,.2,1);
+}
+
+/* Hover state ── wipe in, underline blooms, text adopts target color */
+.top-nav .tab:not(.active):hover {
+  color: var(--to-b);
+  letter-spacing: 6px;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--to-b) 70%, transparent);
+}
+.top-nav .tab:not(.active):hover::before { transform: translateX(0); }
+.top-nav .tab:not(.active):hover::after  { opacity: 1; transform: scaleX(1); }
+
+/* Active tab ── current page; tiny dot signature, no hover wipe */
+.top-nav .tab.active {
+  color: var(--here-accent);
+  cursor: default;
+}
+.top-nav .tab.active::after {
+  opacity: 1;
+  transform: scaleX(.45);
+  background: var(--here-accent);
+  box-shadow: 0 0 16px var(--here-accent);
+}
+
+/* Active-tab signature mark left of the label */
+.top-nav .tab.active::before {
+  content: "";
+  inset: auto auto auto 0;
+  height: 6px; width: 6px;
+  margin-left: 14px;
+  border-radius: 50%;
+  background: var(--here-accent);
+  box-shadow: 0 0 10px var(--here-accent);
+  transform: none;
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   Per-tab destination colors
+   Three pages × 2 other destinations each = 6 rules.
+   ═══════════════════════════════════════════════════════════ */
+[data-theme="dark"]   .tab[data-target="bright"] { --to-a: var(--theme-bright-accent); --to-b: var(--theme-bright-spark); }
+[data-theme="dark"]   .tab[data-target="neon"]   { --to-a: var(--theme-neon-accent);   --to-b: var(--theme-neon-spark); }
+
+[data-theme="bright"] .tab[data-target="dark"]   { --to-a: var(--theme-dark-accent);   --to-b: var(--theme-dark-spark); }
+[data-theme="bright"] .tab[data-target="neon"]   { --to-a: var(--theme-neon-accent);   --to-b: var(--theme-neon-spark); }
+
+[data-theme="neon"]   .tab[data-target="dark"]   { --to-a: var(--theme-dark-accent);   --to-b: var(--theme-dark-spark); }
+[data-theme="neon"]   .tab[data-target="bright"] { --to-a: var(--theme-bright-accent); --to-b: var(--theme-bright-spark); }
+
+/* nudge the page content down past the fixed nav (where the page uses normal scroll) */
+body.has-top-nav { padding-top: 56px; }

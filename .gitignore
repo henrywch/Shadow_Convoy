@@ -81,3 +81,8 @@ Thumbs.db
 node_modules/
 .npm/
 .cache/
+
+# ── Customized ────────────────────────────────────────────────
+
+data/
+output/

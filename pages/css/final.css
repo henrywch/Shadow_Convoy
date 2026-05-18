@@ -1,0 +1,134 @@
+/* ═══════════════════════════════════════════════════════════
+   FINAL — neon cyberpunk
+   Deep violet base, multi-color saturated accents that drift
+   through a rainbow chromatic gradient. To be filled in once
+   final results land.
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;700&display=swap');
+
+[data-theme="neon"] {
+  --bg:        #0d0117;
+  --bg-deep:   #08000f;
+  --ink:       #f0e6ff;
+  --ink-dim:   #9d8dc7;
+  --c-magenta: #ff00aa;
+  --c-violet:  #aa00ff;
+  --c-cyan:    #00aaff;
+  --c-mint:    #00ffaa;
+  --c-amber:   #ffaa00;
+  --font-head: 'Orbitron', monospace;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body[data-theme="neon"] {
+  background: radial-gradient(120% 80% at 50% 0%, #1a0033 0%, var(--bg) 55%, var(--bg-deep) 100%);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+
+/* Drifting rainbow grid backdrop */
+body[data-theme="neon"]::before {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    linear-gradient(115deg,
+      color-mix(in srgb, var(--c-magenta) 18%, transparent) 0%,
+      transparent 25%,
+      color-mix(in srgb, var(--c-violet)  18%, transparent) 40%,
+      transparent 60%,
+      color-mix(in srgb, var(--c-cyan)    18%, transparent) 75%,
+      transparent 90%,
+      color-mix(in srgb, var(--c-mint)    18%, transparent) 100%),
+    repeating-linear-gradient(0deg,  transparent 0 39px, color-mix(in srgb, var(--ink) 6%, transparent) 39px 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, color-mix(in srgb, var(--ink) 6%, transparent) 39px 40px);
+  background-size: 400% 400%, auto, auto;
+  animation: neon-drift 18s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes neon-drift {
+  0%   { background-position: 0% 0%,   0 0, 0 0; }
+  50%  { background-position: 100% 50%, 0 0, 0 0; }
+  100% { background-position: 0% 0%,   0 0, 0 0; }
+}
+
+.final-shell {
+  position: relative;
+  z-index: 1;
+  min-height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 32px;
+}
+
+.final-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+
+.final-title {
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: clamp(48px, 9vw, 120px);
+  letter-spacing: -1px;
+  line-height: 0.95;
+  margin: 18px 0 8px;
+  background: linear-gradient(90deg,
+    var(--c-magenta), var(--c-violet), var(--c-cyan), var(--c-mint), var(--c-amber), var(--c-magenta));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: title-sweep 8s linear infinite;
+  filter: drop-shadow(0 0 24px color-mix(in srgb, var(--c-violet) 50%, transparent));
+}
+@keyframes title-sweep {
+  from { background-position: 0% 50%; }
+  to   { background-position: 300% 50%; }
+}
+
+.final-sub {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink-dim);
+  max-width: 620px;
+  margin: 14px auto 32px;
+}
+
+.final-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border: 1px solid color-mix(in srgb, var(--c-magenta) 50%, transparent);
+  background: color-mix(in srgb, var(--c-magenta) 8%, transparent);
+  color: var(--c-magenta);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.final-pending::before {
+  content: "";
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--c-magenta);
+  box-shadow: 0 0 16px var(--c-magenta);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.7); }
+}

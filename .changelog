@@ -1,0 +1,180 @@
+# Changelog
+
+Convoy detection over 275.9 M traffic records (plate, location, timestamp).
+Spark standalone on Slurm-managed containers, data on GPFS.
+
+Newest first. Each entry: what changed, and — when not obvious — why.
+
+
+## 2026-05-18
+
+- Demo site grew a cross-page navigator: `pages/index.html` (Start,
+  dark theme — unchanged content), `pages/in-process.html` (bright
+  theme — mid-term reproduction report), `pages/final.html` (neon
+  theme — stub for end-of-term deliverable).
+  Three theme palettes are co-declared in `pages/css/nav.css` and
+  scoped via `[data-theme]` attribute selectors. Tab hover sweeps a
+  two-stop gradient (current-theme accent → destination-theme accent)
+  through both the underline bar and a wipe-in background layer.
+
+- **Full-month convoy run succeeded.** 4 h 38 min wall time, 5,258,677
+  transactions, min_count=50, **5,447 convoys** over 31 days. Some
+  transient `heartbeat timed out` warnings (Spark recovered via retry,
+  no fatal errors).
+
+- `scripts/analyze_convoys.py`: summary + three PNG charts (size, count,
+  super-connectors). Key findings:
+  • Only 783 distinct plates of 22 M ever appear in any convoy (0.0036%);
+    convoy signal is extraordinarily thin.
+  • Top single pair `(477634, 491688)` co-located 628× in 31 days = 20.3×/day.
+  • Four plates `{3271142, 16972992, 16970573, 511670}` appear in *exactly*
+    1,548 convoys each — i.e. they are always observed together. Strongest
+    candidate for a real 4+ car fleet operating as a unit.
+  • Top-5 at k=5 and k=6 are the same fleet ± one member, confirming a
+    permanent 6-car convoy `{16970573, 16972992, 18150551, 3271142,
+    3542309, 511670}`.
+
+
+## 2026-05-16
+
+- Week-1 convoy run **succeeded**: 61 min, 41,509 convoys at `min_count=10`,
+  1.17 M transactions. No errors, no executor losses, no retries.
+  Size distribution is inverted-U (22.7 k pairs → 2.9 k triples → 7.1 k k=6),
+  fingerprint of structured fleets — small groups travelling as a whole
+  generating combinatorially many subset-itemsets.
+  Top single pair `(1737487, 3279908)` co-located 243× in 7 days (~35×/day),
+  plate `3279908` is in 9 of the top 13 convoys → likely paired service or
+  commercial vehicles.
+  Full-month projection (recalibrated): 4-8 h at `--min-count 10`, or 1-3 h
+  at span-matched `--min-count 70`.
+
+
+## 2026-05-15
+
+- Day-1 convoy run **succeeded**: 4 min, 850 size-2 convoys, top pair
+  `(323390, 420190)` co-located 25× in 24 h. All three 2026-05-14 fixes
+  (density_cap, -Xss16m, no df.persist) held — no retries, no executor losses.
+
+- `scripts/slice_range.sh` (replaces `slice_day.sh`): generalized to any
+  day range. Produced `week1.csv` = days 1-7 = 66.9 M rows / 1.4 GB in 69 s.
+  Why: a 7-day slice gives an intermediate scale point between day1's smoke
+  test (~50 k transactions) and the full month (~1.5 M), so any genuinely
+  scale-dependent failure surfaces in ~20 min instead of ~2 h.
+
+
+## 2026-05-14
+
+- `scripts/slice_day.sh`: awk one-liner to extract a 24-hour slice from the
+  31-day CSV. Day-1 slice = 9.28 M rows / 208 MB; produced in ~1 min.
+  Why: convoy job iteration was costing ~8 h per failed attempt. With the
+  slice it's 1-2 min, a 240× speedup on debug-loop length.
+
+- `convoy_fpgrowth.py`: removed `df.persist()` for the raw input; raised
+  `spark.network.timeout` to 600 s, `spark.executor.heartbeatInterval` to 30 s.
+  Why: third failure mode — all 5 executors hit heartbeat timeout (125-172 s
+  silent) after FP-Growth + 3 overlapping persists overcommitted heap.
+  Cached `df` was the worst offender (~13 GB decompressed across cluster)
+  for ~zero benefit, since each grid does one scan and GPFS reads are fast.
+  Removing it gives FP-Growth back its heap headroom; the longer timeout is
+  insurance for genuinely long FP-tree builds.
+
+- `convoy_fpgrowth.py`: set `-Xss16m` on executor + driver JVMs.
+  Why: with density_cap=2000 the cgroup OOM was gone, but a new failure
+  appeared — `java.lang.StackOverflowError` inside Kryo serialization of
+  FP-trees (`Tuple2Serializer.write` ↔ `TraversableSerializer.write`
+  recursion, ~2000 frames deep). FP-tree path depth scales with transaction
+  width; the default 1 MB thread stack can't hold 2000-deep recursive
+  serialization. 16 MB ≈ 16k-deep margin at negligible memory cost
+  (18 cores × 16 MB = 288 MB per executor vs. 75 GB heap).
+
+
+## 2026-05-13
+
+- `convoy_fpgrowth.py`: default `--density-cap` 10000 → **2000**.
+  Why: data-driven from `scripts/density_stats.py` — largest legitimate
+  bucket observed is 1,718 plates (loc 16); 2000 leaves ~15% headroom
+  and cleanly excludes the 23,595-plate freak bucket at loc 31 that
+  caused the previous OOM.
+
+- Density investigation (`scripts/density_stats.py`, polars).
+  Per-location bucket-size distribution for windows {300, 200, 100, 50}s.
+  Real max bucket = 1,718 plates (loc 16). One outlier of **23,595** at loc 31
+  whose own p99 is 1,297 — almost certainly a stuck camera or data artifact.
+
+- Picked `density_cap = 2000` for the 300 s convoy run.
+  Why: excludes the single 23 k outlier (the OOM trigger) while preserving
+  every legitimate busy-intersection bucket. The earlier 500 guess was wrong —
+  it would have thrown away ~half the buckets at the six busiest locations.
+
+- First convoy run OOM'd in `FPGrowth.scala:274` (conditional FP-tree build).
+  Cgroup-killed executor → shuffle map files vanish → `MetadataFetchFailedException`.
+  Root cause was a single mega-bucket; `density_cap=10000` (inherited from the
+  chunked legacy code) let it through.
+
+- `convoy_fpgrowth.py` (`src/job/`): FP-Growth-based convoy miner.
+  Drops the legacy iterative time-chunking and aggressive plate pre-filter
+  (no longer needed at 90 cores / 375 GB executor RAM).
+  Keeps the Grid A + Grid B (offset = window/2) trick for bucket-boundary
+  smoothing — that's data physics, not a hardware workaround.
+
+- `requirements.txt` baked into the image (numpy + pandas + pyarrow).
+  Why: `pyspark.ml` hard-imports numpy at module load — the convoy job
+  crashed immediately on `import` before our code even ran.
+
+
+## 2026-05-12
+
+- Five-node Spark standalone cluster ran cleanly under Slurm.
+  basic-stats job: 275,893,209 rows / 22,058,054 plates / 977 locations,
+  31.00 days span. ~17 s end-to-end. Cluster, GPFS reads, FP-merge healthy.
+
+- Uploaded `data/input/31.csv` (5.8 GB) via Windows → Linux through the
+  platform's rtunnel proxy. Used `sftp -b - … <<< reput` for resume-on-drop
+  after rsync hit two-end install + path-translation walls.
+
+- Tuned resources to 5 × 20 cores × 100 GB nodes:
+  EXECUTOR_CORES=18, EXECUTOR_MEMORY=75 g, DRIVER_MEMORY=12 g,
+  SPARK_WORKER_MEMORY=85 g (worker advertises ≥ executor + headroom).
+
+- Image build pipeline finalized: `src/image/{install-spark.sh,Dockerfile,
+  requirements.txt}` install JDK 17 + Spark 3.5.3 (Hadoop-3 bundle) + the
+  Python deps into `/opt`. Idempotent; health-checked via "binary runs"
+  not just "binary exists".
+
+- Hardcoded `source /inspire/.../src/env.sh` everywhere (no more
+  $(dirname "$0") dance). Repo lives at a stable GPFS path; the indirection
+  bought us nothing.
+
+
+## 2026-05-11 — Architecture pivot
+
+- Dropped Hadoop / HDFS / YARN from the original plan.
+  Why: GPFS is already the shared filesystem ("free HDFS-equivalent"); Spark
+  reads `file:///inspire/...` directly. No NameNode/DataNode, no YARN.
+  Removes ~80 % of the original `cluster_launch.sh` from PLAN.md and
+  sidesteps every replication/inode-limit constraint in reports.md.
+
+- Confirmed Spark + Slurm coexist (no conflict).
+  Slurm allocates containers; inside the allocation we bring up a
+  Spark standalone master + workers. Pattern documented at Princeton,
+  TACC, NIH-HPC, etc.
+
+- Master discovery via GPFS file (`$CLUSTER_DIR/master.endpoint`), not DNS.
+  Why: pod IPs are dynamic; DNS for k8s-ephemeral hostnames is unreliable;
+  a shared FS we already have works for free.
+
+- Pinned every Spark daemon to its container's primary intranet IP via
+  `SPARK_LOCAL_IP=$(hostname -I)`. Required for driver↔executor traffic
+  under the overlay network.
+
+
+## Base — inherited state
+
+- `base/reports.md`, `PLAN.md`, `base/PJ_AccompanyCars/codes/`: prior project
+  targeting a 5-node × 8-core × 8 GB cluster with HDFS + YARN.
+  Algorithmic core (Grid A/B sliding windows, FP-Growth on (location, bucket)
+  transactions) carried forward; resource-constrained engineering (iterative
+  chunking, aggressive plate pre-filter, density_cap=10 k) replaced.
+
+- Dataset: 275.9 M records / 22 M unique plates / 977 locations / 31 days.
+  Schema: `plate STRING, location STRING, timestamp BIGINT` (unix s).
