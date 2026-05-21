@@ -3,29 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shadow Convoy · Final</title>
+  <title>Shadow Convoy · Conclusione</title>
   <link rel="stylesheet" href="css/nav.css" />
   <link rel="stylesheet" href="css/final.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
 </head>
-<body data-theme="neon" class="has-top-nav">
+<body data-theme="neon" data-prev="climax.html">
+
+<div class="scanline-neon"></div>
 
 <nav class="top-nav" aria-label="Project sections">
-  <a class="tab"        data-target="dark"   href="index.html">START</a>
-  <a class="tab"        data-target="bright" href="in-process.html">IN&nbsp;PROCESS</a>
-  <a class="tab active" data-target="neon"   href="final.html">FINAL</a>
+  <a class="tab"        data-target="dark"   href="index.html">
+    <span class="zh">Inizio</span><span class="en">Beginning</span>
+  </a>
+  <a class="tab"        data-target="bright" href="sviluppo.html">
+    <span class="zh">Sviluppo</span><span class="en">Development</span>
+  </a>
+  <a class="tab"        data-target="bright" href="climax.html">
+    <span class="zh">Climax</span><span class="en">Climax</span>
+  </a>
+  <a class="tab active" data-target="neon"   href="final.html">
+    <span class="zh">Conclusione</span><span class="en">Conclusion</span>
+  </a>
 </nav>
 
-<main class="final-shell">
-  <p class="final-tag">forthcoming · end-of-term deliverable</p>
-  <h1 class="final-title">FINAL</h1>
-  <p class="final-sub">
-    The end-of-term page lands here when the accelerated pipeline ships:
-    plane-sweep candidate generation, MinHash-LSH pre-clustering, and the
-    full convoy-graph analysis with spatiotemporal trajectory plots.
-  </p>
-  <span class="final-pending">pending · awaiting forward work</span>
-</main>
+<section class="section" id="hero" style="min-height: 100vh; text-align: center;">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <p class="kicker" style="text-align: center;">Conclusione · forthcoming</p>
+    <h1 class="section-title" style="font-size: clamp(56px, 10vw, 140px);">
+      <span class="title-sweep">To Be Continued</span>
+    </h1>
+    <p class="lede" style="font-size: 16px; text-align: center; max-width: 720px; margin: 32px auto;">When MaxGrowth's full-month run lands, this section will hold the comprehensive conclusion: side-by-side results against the Sviluppo baseline, the analytical readings (fleet membership, OCR-ghost filtration, spatiotemporal trajectory plots), and what the trajectory framing actually changes in the read of the data.</p>
+
+    <div style="display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap; justify-content: center; max-width: 720px;">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="font-family: 'Orbitron', monospace; font-weight: 900; font-size: 24px;" class="magenta">RESULTS</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--ink-dim); margin-top: 6px;">MaxGrowth vs FP-Growth</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="font-family: 'Orbitron', monospace; font-weight: 900; font-size: 24px;" class="cyan">ANALYSIS</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--ink-dim); margin-top: 6px;">Fleets, ghosts, routes</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="font-family: 'Orbitron', monospace; font-weight: 900; font-size: 24px;" class="mint">CONCLUSION</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--ink-dim); margin-top: 6px;">What the data taught us</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 56px; padding: 16px 22px; border: 1px solid color-mix(in srgb, var(--c-magenta) 50%, transparent); display: inline-flex; align-items: center; gap: 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 3px; color: var(--c-magenta); text-transform: uppercase;">
+      <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--c-magenta); box-shadow: var(--glow-accent); animation: status-pulse 1.6s ease-in-out infinite; display: inline-block;"></span>
+      Awaiting MaxGrowth full-month validation
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes status-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.4; transform: scale(0.7); }
+  }
+  body[data-theme="neon"] { padding-top: 64px; }
+</style>
+
+<script>
+  // Single-slide page: ←/→ navigate cross-section per body's data-prev / data-next.
+  (() => {
+    const prev = document.body.dataset.prev;
+    const next = document.body.dataset.next;
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft'  && prev) { e.preventDefault(); window.location.href = prev; }
+      if (e.key === 'ArrowRight' && next) { e.preventDefault(); window.location.href = next; }
+    });
+  })();
+</script>
 
 </body>
 </html>

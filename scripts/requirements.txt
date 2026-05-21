@@ -1,1 +1,4 @@
 polars>=1.0
+networkx>=3.2          # graph_communities.py
+pandas>=2.0            # analyze_convoys.py
+matplotlib>=3.8        # analyze_convoys.py

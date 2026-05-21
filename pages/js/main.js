@@ -94,13 +94,26 @@ window.addEventListener('touchend', e => {
 }, { passive: true });
 
 // ── Keyboard ─────────────────────────────────────────────────
+const prevSection = document.body.dataset.prev;
+const nextSection = document.body.dataset.next;
+
 window.addEventListener('keydown', e => {
   if (isTransitioning) return;
   if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); goTo(currentIndex + 1); }
   if (e.key === 'ArrowUp'   || e.key === 'PageUp'  ) { e.preventDefault(); goTo(currentIndex - 1); }
-  // Left/Right: scroll algo track when on algo section, ignored elsewhere
-  if (e.key === 'ArrowRight' && currentIndex === ALGO_SECTION) { e.preventDefault(); algoScroll(1);  }
-  if (e.key === 'ArrowLeft'  && currentIndex === ALGO_SECTION) { e.preventDefault(); algoScroll(-1); }
+  // ←/→ on the algo timeline section: scroll the horizontal V1→V6 track (existing behaviour).
+  if (e.key === 'ArrowRight' && currentIndex === ALGO_SECTION) { e.preventDefault(); algoScroll(1);  return; }
+  if (e.key === 'ArrowLeft'  && currentIndex === ALGO_SECTION) { e.preventDefault(); algoScroll(-1); return; }
+  // ←/→ on either boundary slide (first OR last) → cross-section navigation.
+  const atBoundary = (currentIndex === 0) || (currentIndex === sections.length - 1);
+  if (atBoundary && e.key === 'ArrowLeft'  && prevSection) {
+    e.preventDefault();
+    window.location.href = prevSection;
+  }
+  if (atBoundary && e.key === 'ArrowRight' && nextSection) {
+    e.preventDefault();
+    window.location.href = nextSection;
+  }
 });
 
 // ── Nav dots click ───────────────────────────────────────────

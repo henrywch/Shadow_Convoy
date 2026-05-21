@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Convoy · Climax</title>
+  <link rel="stylesheet" href="css/nav.css" />
+  <link rel="stylesheet" href="css/in-process.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+</head>
+<body data-theme="bright" data-prev="sviluppo.html" data-next="final.html">
+
+<div class="scanline-light"></div>
+<div id="scroll-progress"></div>
+
+<nav class="top-nav" aria-label="Project sections">
+  <a class="tab"        data-target="dark"   href="index.html">
+    <span class="zh">Inizio</span><span class="en">Beginning</span>
+  </a>
+  <a class="tab"        data-target="bright" href="sviluppo.html">
+    <span class="zh">Sviluppo</span><span class="en">Development</span>
+  </a>
+  <a class="tab active" data-target="bright" href="climax.html">
+    <span class="zh">Climax</span><span class="en">Climax</span>
+  </a>
+  <a class="tab"        data-target="neon"   href="final.html">
+    <span class="zh">Conclusione</span><span class="en">Conclusion</span>
+  </a>
+</nav>
+
+<nav class="nav-dots" aria-label="Slide navigation">
+  <button class="nav-dot active" data-section="hero"   data-label="SHADOW TRAJECTORY"></button>
+  <button class="nav-dot"        data-section="algo"   data-label="ALGORITHM"></button>
+  <button class="nav-dot"        data-section="status" data-label="TO BE COMPLETED"></button>
+</nav>
+
+<div id="page-wrapper">
+
+  <!-- ═════ 0 — TITLE: Shadow Trajectory ═════ -->
+  <section class="section" id="hero">
+    <div class="section-inner">
+      <p class="kicker">L'apice · The trajectory turn</p>
+      <h1 class="section-title">
+        <span class="glitch" data-text="Shadow Trajectory">Shadow Trajectory</span>
+      </h1>
+      <p class="lede" style="font-size: 16px;"><strong class="accent">cells</strong> → <strong class="spark">routes</strong>. The Sviluppo section showed what FP-Growth could see when the unit of analysis was a <em>cell</em> (one location × one 5-min bucket). The Climax section reframes the same 275.9 M records around a stronger primitive: the <em>trajectory</em> of each vehicle, and the platoons that arise as ordered camera sequences traversed together.</p>
+      <div class="hero-stats" style="margin-top: 44px;">
+        <div class="hero-stat"><div class="v">⟨O, P⟩</div><div class="k">Pattern Shape</div></div>
+        <div class="hero-stat"><div class="v">m · k · d · ε</div><div class="k">Four Parameters</div></div>
+        <div class="hero-stat"><div class="v">8 stages</div><div class="k">Spark + Driver pipeline</div></div>
+        <div class="hero-stat"><div class="v">VLDB 2024</div><div class="k">Bei et al. — MaxGrowth</div></div>
+      </div>
+    </div>
+    <div class="scroll-hint"><span>continue</span><div class="scroll-arrow"></div></div>
+  </section>
+
+  <!-- ═════ 1 — ALGORITHM ═════ -->
+  <section class="section" id="algo">
+    <div class="section-inner">
+      <p class="kicker">01 / The algorithm, end to end</p>
+      <h2 class="section-title">
+        MaxGrowth — <span class="swipe">parameters · pipeline · pruning</span>
+      </h2>
+
+      <!-- four parameters -->
+      <div class="param-grid">
+        <div class="param">
+          <div class="sym">m</div>
+          <div class="flag">--min-size · default 2</div>
+          <div class="meaning">minimum plates in a platoon.</div>
+        </div>
+        <div class="param">
+          <div class="sym">k</div>
+          <div class="flag">--min-length · default 3</div>
+          <div class="meaning">minimum cameras in the route — the "more than one intersection" rule.</div>
+        </div>
+        <div class="param">
+          <div class="sym">d</div>
+          <div class="flag">--gap · default 1</div>
+          <div class="meaning">missing-camera tolerance — OCR / occlusion absorption.</div>
+        </div>
+        <div class="param">
+          <div class="sym">ε</div>
+          <div class="flag">--eps · default 300 s</div>
+          <div class="meaning">co-arrival window at one camera.</div>
+        </div>
+      </div>
+
+      <!-- 8 pipeline stages -->
+      <div class="pipeline" style="margin-top: 24px;">
+        <div class="step spark"><span class="ix">01 · spark</span><span class="label">CSV scan</span></div>
+        <div class="step spark"><span class="ix">02 · spark</span><span class="label">prefilter plates</span></div>
+        <div class="step spark"><span class="ix">03 · spark</span><span class="label">trajectories</span></div>
+        <div class="step spark"><span class="ix">04 · spark</span><span class="label">clusters</span></div>
+        <div class="step driver"><span class="ix">05 · driver</span><span class="label">position index</span></div>
+        <div class="step driver"><span class="ix">06 · driver</span><span class="label">broadcast</span></div>
+        <div class="step spark"><span class="ix">07 · spark</span><span class="label">parallel growth</span></div>
+        <div class="step driver"><span class="ix">08 · driver</span><span class="label">maximality + write</span></div>
+      </div>
+
+      <!-- key insight as prose, no code block -->
+      <p class="lede" style="margin-top: 22px;"><strong>Local maximality during growth</strong> is the optimization that makes the rest viable. The naive enumerator emits a pattern at every recursion depth ≥ k — millions of redundant prefixes of their own extensions. The local rule fixes this in one line: <em>if any extension preserves the full current membership, the longer route strictly dominates this stack — skip emission</em>.</p>
+      <p style="margin-top: 14px; font-size: 13.5px; line-height: 1.7;">Emitting only when the recursion either shrinks membership or terminates cuts raw patterns by <strong class="spark">10–100×</strong> before the global maximality filter even runs. Combined with an <strong class="accent">inverted-index</strong> dominance check (candidates restricted to patterns containing every member of B, seeded on B's rarest plate), what was an O(N²) post-process at 2.6 M patterns becomes a few seconds on tens of thousands.</p>
+    </div>
+  </section>
+
+  <!-- ═════ 2 — TO BE COMPLETED ═════ -->
+  <section class="section" id="status">
+    <div class="section-inner">
+      <p class="kicker">02 / Where it stands</p>
+      <h2 class="section-title">
+        Implementation <span class="swipe">complete</span>. Validation <span class="glitch" data-text="pending">pending</span>.
+      </h2>
+      <p class="lede">Every stage is built, tested on synthetic fixtures, and wired into the same Slurm + Spark cluster scripts that ran FP-Growth. Four failure modes were encountered and retired along the way (driver result-size cap, OOM from over-permissive Apriori prefilter, executor module-not-found, O(N²) maximality filter). The remaining work is parameter tuning on real data — matching <code>--min-observations</code> to FP-Growth's <code>min_count=50</code> so the surviving plate set is comparable to the 783-plate FP-Growth result, then promoting day-1 to 31 days.</p>
+
+      <div class="status-banner">
+        <span class="pulse"></span>
+        <span><strong>Status:</strong> pipeline functional through cluster materialization on day-1 data (<strong class="accent">199,949 plates</strong> / <strong class="accent">3.5 M visits</strong> / <strong class="accent">293 k ε-clusters</strong> in ~40 s of Spark time); driver-side enumeration being re-tuned for FP-Growth-equivalent thresholds. Full-month run is the next milestone.</span>
+      </div>
+
+      <table class="failure-table" style="margin-top: 22px;">
+        <thead>
+          <tr><th>open item</th><th>state</th><th>what unblocks it</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>day-1 smoke</strong></td>
+            <td>tuning <code>--min-observations</code></td>
+            <td class="fix">target ≈ FP-Growth's 783-plate set</td>
+          </tr>
+          <tr>
+            <td><strong>full-month run</strong></td>
+            <td>blocked on day-1</td>
+            <td class="fix">promote params; expect 30–90 min wall</td>
+          </tr>
+          <tr>
+            <td>distributed maximality filter</td>
+            <td>not yet needed at current scale</td>
+            <td class="fix">broadcast pattern set + partition dominance check</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size: 13px; line-height: 1.7; margin-top: 24px;">
+        See <a href="final.html" style="color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent);"><strong>Conclusione</strong></a> for the comprehensive view (when the validation lands).
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<script src="js/in-process.js"></script>
+</body>
+</html>

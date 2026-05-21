@@ -33,51 +33,70 @@
 .top-nav {
   position: fixed;
   inset: 0 0 auto 0;
-  height: 56px;
+  height: 64px;
   z-index: 1000;
   display: flex;
   font-family: 'Orbitron', monospace;
-  font-size: 11px;
-  letter-spacing: 4px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  background: color-mix(in srgb, var(--bg, #0a0a0f) 70%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--here-accent) 25%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--bg, #0a0a0f) 72%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--here-accent) 30%, transparent);
 }
 
 .top-nav .tab {
   flex: 1;
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   text-decoration: none;
   color: var(--text, #b0b8d0);
   overflow: hidden;
   isolation: isolate;
   cursor: pointer;
   transition: color 420ms cubic-bezier(.4,0,.2,1),
-              letter-spacing 420ms cubic-bezier(.4,0,.2,1),
               text-shadow 420ms ease;
 }
 
-/* The wipe layer — a left-to-right gradient that builds on hover.
-   --to-a / --to-b are set per-tab via the [data-theme="…"] rules below. */
+/* The tab's two-line label: large CJK + small Latin */
+.top-nav .tab .zh {
+  font-family: 'Orbitron', 'Noto Sans CJK SC', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 4px;
+  line-height: 1;
+}
+.top-nav .tab .en {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+/* Each tab carries the colors of its *destination* theme. Hover shows
+   that theme — independent of the page you're currently on. */
+.top-nav .tab[data-target="dark"]   { --tab-a: var(--theme-dark-accent);   --tab-b: var(--theme-dark-spark); }
+.top-nav .tab[data-target="bright"] { --tab-a: var(--theme-bright-accent); --tab-b: var(--theme-bright-spark); }
+.top-nav .tab[data-target="neon"]   { --tab-a: var(--theme-neon-accent);   --tab-b: var(--theme-neon-spark); }
+
+/* The wipe layer — a left-to-right two-stop gradient in the
+   destination theme's accent + spark. */
 .top-nav .tab::before {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg,
-    color-mix(in srgb, var(--here-accent) 18%, transparent) 0%,
-    color-mix(in srgb, var(--here-spark)  20%, transparent) 28%,
-    color-mix(in srgb, var(--to-a)        24%, transparent) 60%,
-    color-mix(in srgb, var(--to-b)        28%, transparent) 100%);
+    color-mix(in srgb, var(--tab-a) 22%, transparent) 0%,
+    color-mix(in srgb, var(--tab-b) 30%, transparent) 100%);
   transform: translateX(-100%);
   transition: transform 600ms cubic-bezier(.4,0,.2,1);
   z-index: -1;
 }
 
-/* The blooming underline — a tighter gradient bar that scales out. */
+/* The blooming underline — pure destination-theme gradient. */
 .top-nav .tab::after {
   content: "";
   position: absolute;
@@ -85,10 +104,8 @@
   height: 2px;
   background: linear-gradient(90deg,
     transparent 0%,
-    var(--here-accent) 15%,
-    var(--here-spark)  35%,
-    var(--to-a)        65%,
-    var(--to-b)        85%,
+    var(--tab-a) 25%,
+    var(--tab-b) 75%,
     transparent 100%);
   opacity: 0;
   transform: scaleX(.3);
@@ -97,12 +114,13 @@
               transform 600ms cubic-bezier(.4,0,.2,1);
 }
 
-/* Hover state ── wipe in, underline blooms, text adopts target color */
+/* Hover ── wipe in, underline blooms, text adopts destination color */
 .top-nav .tab:not(.active):hover {
-  color: var(--to-b);
-  letter-spacing: 6px;
-  text-shadow: 0 0 12px color-mix(in srgb, var(--to-b) 70%, transparent);
+  color: var(--tab-b);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--tab-a) 70%, transparent);
 }
+.top-nav .tab:not(.active):hover .zh { letter-spacing: 6px; }
+.top-nav .tab:not(.active):hover .en { opacity: 1; }
 .top-nav .tab:not(.active):hover::before { transform: translateX(0); }
 .top-nav .tab:not(.active):hover::after  { opacity: 1; transform: scaleX(1); }
 
@@ -133,18 +151,6 @@
 }
 
 
-/* ═══════════════════════════════════════════════════════════
-   Per-tab destination colors
-   Three pages × 2 other destinations each = 6 rules.
-   ═══════════════════════════════════════════════════════════ */
-[data-theme="dark"]   .tab[data-target="bright"] { --to-a: var(--theme-bright-accent); --to-b: var(--theme-bright-spark); }
-[data-theme="dark"]   .tab[data-target="neon"]   { --to-a: var(--theme-neon-accent);   --to-b: var(--theme-neon-spark); }
-
-[data-theme="bright"] .tab[data-target="dark"]   { --to-a: var(--theme-dark-accent);   --to-b: var(--theme-dark-spark); }
-[data-theme="bright"] .tab[data-target="neon"]   { --to-a: var(--theme-neon-accent);   --to-b: var(--theme-neon-spark); }
-
-[data-theme="neon"]   .tab[data-target="dark"]   { --to-a: var(--theme-dark-accent);   --to-b: var(--theme-dark-spark); }
-[data-theme="neon"]   .tab[data-target="bright"] { --to-a: var(--theme-bright-accent); --to-b: var(--theme-bright-spark); }
-
-/* nudge the page content down past the fixed nav (where the page uses normal scroll) */
-body.has-top-nav { padding-top: 56px; }
+/* nudge the page content down past the fixed nav (only for pages that
+   use natural scroll; snap-scroll pages don't need this). */
+body.has-top-nav { padding-top: 64px; }
