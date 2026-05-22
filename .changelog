@@ -5,6 +5,11 @@ Convoy detection over 275.9 M traffic records (plate, location, timestamp). Spar
 Newest first. Each entry: what changed, and — when not obvious — why.
 
 
+## 2026-05-22
+
+- Charts on the deployed site rendered blank. Cause: `pages/charts` was a symlink to `../data/output/convoy_fpg_31` (outside the `pages/` publish_dir), so the GitHub Action's `actions-gh-pages` step couldn't carry the targets onto the `gh-pages` branch. Fix: copy the three PNGs into `pages/img/charts/` as real files; rewrite the three `<img src="charts/...">` references in `sviluppo.html` to `img/charts/...`; delete the symlink. Verified all references resolve and the files aren't gitignored.
+
+
 ## 2026-05-21
 
 - Removed `.lede { max-width: 720px }` from both bright (`in-process.css`) and neon (`final.css`) stylesheets, plus one inline `max-width: 820px` on climax's hero lede. Prose now flows to the section-inner column width (1100 px), so wrapping happens at the page edge rather than at a typographic-ideal-but-narrower cap. This addresses "text doesn't touch the line end" on the bright pages.
