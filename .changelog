@@ -7,6 +7,8 @@ Newest first. Each entry: what changed, and — when not obvious — why.
 
 ## 2026-05-22
 
+- Sviluppo's Top-5 slide: ←/→ now cycle through the k = 2 .. 6 tabs (wraps both directions). Checked in `in-process.js` *before* the boundary-section nav, so the k-cycle takes priority if a Top-5 slide ever lands at a boundary position. Mid-section slides on other pages (no `#tables` element) keep the previous no-op behaviour.
+
 - Charts on the deployed site rendered blank. Cause: `pages/charts` was a symlink to `../data/output/convoy_fpg_31` (outside the `pages/` publish_dir), so the GitHub Action's `actions-gh-pages` step couldn't carry the targets onto the `gh-pages` branch. Fix: copy the three PNGs into `pages/img/charts/` as real files; rewrite the three `<img src="charts/...">` references in `sviluppo.html` to `img/charts/...`; delete the symlink. Verified all references resolve and the files aren't gitignored.
 
 

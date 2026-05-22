@@ -49,6 +49,13 @@
     if (['ArrowUp',   'PageUp'].includes(e.key))        { e.preventDefault(); go(i - 1); }
     if (e.key === 'Home') { e.preventDefault(); go(0); }
     if (e.key === 'End')  { e.preventDefault(); go(sections.length - 1); }
+    // ← / → on the Top-5 slide (#tables) cycle through the k tabs — checked
+    // before the boundary nav, so the k-cycle takes priority over section-nav
+    // if a page ever puts the Top-5 at a boundary position.
+    if (sections[i]?.id === 'tables') {
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); switchK(-1); return; }
+      if (e.key === 'ArrowRight') { e.preventDefault(); switchK(1);  return; }
+    }
     // ← / → at *either* boundary slide (first OR last) → cross-section nav.
     // ← always goes to previous section, → always to next, regardless of which boundary.
     const atBoundary = (i === 0) || (i === sections.length - 1);
@@ -74,7 +81,7 @@
   dots.forEach((d, k) => d.addEventListener('click', () => go(k)));
 
   // --- §4 Top-5 tab switcher ---
-  const tabs  = document.querySelectorAll('.k-tab-btn');
+  const tabs  = [...document.querySelectorAll('.k-tab-btn')];
   const panes = document.querySelectorAll('.k-pane');
   tabs.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -83,6 +90,12 @@
       panes.forEach((p) => p.classList.toggle('active', p.dataset.k === k));
     });
   });
+  // Cycle through k tabs (wraps around) — called by ←/→ when on the Top-5 slide.
+  function switchK(delta) {
+    if (!tabs.length) return;
+    const cur = Math.max(0, tabs.findIndex((t) => t.classList.contains('active')));
+    tabs[(cur + delta + tabs.length) % tabs.length].click();
+  }
 
   // --- Init ---
   dots[0]?.classList.add('active');
