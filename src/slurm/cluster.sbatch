@@ -42,9 +42,12 @@ for _ in $(seq 1 30); do [ -s "$MASTER_ENDPOINT_FILE" ] && break; sleep 1; done
 export SPARK_WORKER_CORES="${SPARK_WORKER_CORES:-18}"
 export SPARK_WORKER_MEMORY="${SPARK_WORKER_MEMORY:-85g}"
 
-# One worker per allocated task — the master task also runs a worker to
-# avoid wasting its cores.
-srun --ntasks="$SLURM_NTASKS" "$REPO/start-worker.sh"
+# One worker per allocated task EXCEPT the master task. Co-locating an
+# executor with the driver overcommits the master-node cgroup on large jobs
+# (driver Python heap + executor Python workers + both JVM heaps > node RAM).
+# See doc/MaxGrowth.md Appendix B.
+NON_MASTER_NODES=$(printf '%s,' "${NODES[@]:1}" | sed 's/,$//')
+srun --ntasks=$((SLURM_NTASKS - 1)) --nodelist="$NON_MASTER_NODES" "$REPO/start-worker.sh"
 
 # Driver runs in client mode on the master task so executors can reach it.
 srun --ntasks=1 --nodelist="$MASTER_NODE" \
