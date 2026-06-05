@@ -1,0 +1,22 @@
+# Method 2 — trajectory embedding pipeline.
+#
+# Stage 1 (build_sequences.py) needs only pyspark (already in the cluster image).
+# Stages 2–3 need the following. On the GPU instance, install the CUDA build of
+# torch and (optionally) the RAPIDS GPU libraries for the big speedups.
+
+# Stage 2 — embedding model (CPU build shown; use the CUDA wheel on the GPU box)
+torch>=2.1
+numpy>=1.23
+pyarrow>=14.0          # read the Stage-1 parquet sequences
+
+# Stage 3 — clustering + confirmation
+scikit-learn>=1.3      # CPU fallback; provides HDBSCAN/KMeans/DBSCAN
+pandas>=2.0            # streaming the raw CSV for co-occurrence confirmation
+
+# ── GPU acceleration (install on the GPU instance; pipeline auto-detects) ──
+# RAPIDS cuML  → GPU HDBSCAN/KMeans/DBSCAN (drop-in for sklearn.cluster)
+#   pip install cuml-cu12      (match your CUDA version)
+# FAISS-GPU / cuVS → only needed if you add an ANN candidate-search step
+#   pip install faiss-gpu-cu12
+# torch CUDA wheel:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124

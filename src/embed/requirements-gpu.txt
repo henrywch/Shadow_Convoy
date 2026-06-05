@@ -1,0 +1,45 @@
+# GPU environment for Method 2 (.venv-gpu) — CUDA 12.x target, Python 3.12.
+#
+# This set was assembled and dependency-resolved on a CPU-only box. GPU libs
+# (cuml/cudf) install correctly but cannot be import-verified without a CUDA
+# driver — on this box they fail with `cudaErrorInsufficientDriver`, which is a
+# driver-absence error, not a packaging error. Verify on the GPU instance:
+#
+#   /usr/bin/python3.12 -m venv .venv-gpu
+#   .venv-gpu/bin/pip install --upgrade pip wheel setuptools
+#   .venv-gpu/bin/pip install -r src/embed/requirements-gpu.txt \
+#       --extra-index-url https://download.pytorch.org/whl/cu124 \
+#       --extra-index-url https://pypi.nvidia.com
+#   .venv-gpu/bin/python -c "import torch; print(torch.cuda.is_available())"   # True on GPU
+#   .venv-gpu/bin/python -c "import cuml, cudf; print(cuml.__version__)"       # GPU-only
+#
+# Different CUDA on your GPU box? Swap the torch index (cu121 / cu128). RAPIDS
+# uses one generic "-cu12" wheel across all CUDA 12.x, so it needs no change.
+
+# ── Stage 2: PyTorch (CUDA 12.4 build) ───────────────────────────────────
+# from https://download.pytorch.org/whl/cu124  (bundles its own CUDA libs)
+torch==2.6.0
+
+# ── Stage 3: RAPIDS cuML/cuDF (GPU HDBSCAN/KMeans/DBSCAN) ─────────────────
+# from https://pypi.nvidia.com ; pulls cudf, cupy, numba, dask-cuda, AND
+# cuvs-cu12 (NVIDIA GPU vector search: CAGRA/IVF — our ANN option, so no
+# separate faiss needed). cluster_confirm.py imports `cuml.cluster`.
+cuml-cu12==25.02.*
+cudf-cu12==25.02.*
+
+# numpy MUST be 2.0.x: numba (via RAPIDS) caps numpy<2.1 while cupy needs
+# numpy>=2.0 — 2.0.x is the only overlap. Do not bump this without checking
+# both constraints again.
+numpy==2.0.2
+
+# ── Shared deps (CPU-side; same as the CPU .venv) ────────────────────────
+pandas>=2.0
+pyarrow>=14.0
+scikit-learn>=1.3      # CPU fallback / sanity check
+pyspark>=3.4,<4        # only if you also run Stage 1 (build_sequences) from here
+
+# ── NOT installed: faiss-gpu-cu12 ────────────────────────────────────────
+# faiss-gpu-cu12 1.9.0 pins numpy<2, which downgrades numpy and breaks cupy
+# (numpy>=2.0). cuVS (above, pulled by RAPIDS) is the modern GPU ANN that
+# Faiss itself now integrates, so faiss is redundant here. If you specifically
+# need the faiss API, install it in a SEPARATE venv to avoid the numpy clash.

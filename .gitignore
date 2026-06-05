@@ -9,6 +9,7 @@ dist/
 build/
 .eggs/
 .venv/
+.venv-gpu/
 venv/
 env/
 pip-wheel-metadata/
