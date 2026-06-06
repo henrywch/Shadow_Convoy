@@ -49,7 +49,8 @@ def main():
                    help="cap surviving plates (top-N by sighting count); 0 = no cap")
     p.add_argument("--max-len", type=int, default=128,
                    help="truncate sequences to the last N visits (keeps the embed "
-                        "model's input bounded; long-tail taxis/buses are outliers)")
+                        "model's input bounded; long-tail taxis/buses are outliers). "
+                        "Pass 0 (or any non-positive value) to disable truncation.")
     a = p.parse_args()
 
     spark = (
@@ -88,15 +89,18 @@ def main():
           .agg(F.sort_array(F.collect_list(F.struct("t", "camera"))).alias("tc"))
           .withColumn("cameras", F.expr("transform(tc, x -> x.camera)"))
           .withColumn("times",   F.expr("transform(tc, x -> x.t)"))
-          # keep only the last max_len visits if longer
           .withColumn("n", F.size("cameras"))
-          .withColumn("cameras",
-                      F.expr(f"slice(cameras, greatest(1, n - {a.max_len} + 1), {a.max_len})"))
-          .withColumn("times",
-                      F.expr(f"slice(times, greatest(1, n - {a.max_len} + 1), {a.max_len})"))
-          .withColumn("n", F.size("cameras"))
-          .select("plate", "cameras", "times", "n")
     )
+    if a.max_len > 0:
+        # keep only the last max_len visits if longer
+        seq = (
+            seq.withColumn("cameras",
+                           F.expr(f"slice(cameras, greatest(1, n - {a.max_len} + 1), {a.max_len})"))
+               .withColumn("times",
+                           F.expr(f"slice(times, greatest(1, n - {a.max_len} + 1), {a.max_len})"))
+               .withColumn("n", F.size("cameras"))
+        )
+    seq = seq.select("plate", "cameras", "times", "n")
 
     n_plates = seq.count()
     print(f"[embed-seq] {n_plates:,} plates survive prefilter "
