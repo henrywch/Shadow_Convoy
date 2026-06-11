@@ -142,22 +142,56 @@ def main():
     opt = torch.optim.Adam(model.parameters(), lr=a.lr)
     loss_fn = nn.CrossEntropyLoss(ignore_index=PAD)
 
+    # bf16 autocast: same exponent range as fp32 (no overflow → no inf/NaN
+    # from numeric overflow during the long-sequence forward pass), with
+    # fp16-equivalent memory. RNN/GRU cells are supported by autocast.
+    # No GradScaler needed for bf16.
+    use_autocast = device.type == "cuda" and torch.cuda.is_bf16_supported()
+    log(f"autocast bf16: {use_autocast}")
+
     model.train()
     for epoch in range(a.epochs):
         if sampler is not None:
             sampler.set_epoch(epoch)
-        total, nb = 0.0, 0
+        total, nb, n_skipped, n_rescued = 0.0, 0, 0, 0
         for src, src_len, tin, tout in loader:
             src, src_len = src.to(device), src_len.to(device)
             tin, tout = tin.to(device), tout.to(device)
-            logits = model(src, src_len, tin)
-            loss = loss_fn(logits.reshape(-1, logits.size(-1)), tout.reshape(-1))
+            with torch.autocast(device_type=device.type, dtype=torch.bfloat16,
+                                enabled=use_autocast):
+                logits = model(src, src_len, tin)
+                loss = loss_fn(logits.reshape(-1, logits.size(-1)), tout.reshape(-1))
+            # Belt + suspenders: bf16 should eliminate overflow, but if loss
+            # still goes non-finite (eg from an undetected pathological seq),
+            # skip the step entirely so one bad batch doesn't drift the model.
+            if not torch.isfinite(loss):
+                n_skipped += 1
+                opt.zero_grad(set_to_none=True)
+                continue
             opt.zero_grad()
             loss.backward()
-            nn.utils.clip_grad_norm_(model.parameters(), 5.0)
+            # Rescue partially-bad gradients: replace any NaN/Inf elements with
+            # finite values rather than poisoning the optimizer step.
+            had_bad_grad = False
+            for p in model.parameters():
+                if p.grad is None:
+                    continue
+                if not torch.isfinite(p.grad).all():
+                    p.grad.nan_to_num_(nan=0.0, posinf=1.0, neginf=-1.0)
+                    had_bad_grad = True
+            if had_bad_grad:
+                n_rescued += 1
+            # Value-clip (per-element) is robust to inf/NaN entries in a way
+            # norm-clip is not: norm(vec_with_nan) == nan, so norm-clip
+            # multiplies every gradient by nan and produces a nan step.
+            nn.utils.clip_grad_value_(model.parameters(), 1.0)
             opt.step()
             total += loss.item(); nb += 1
-        log(f"epoch {epoch + 1}/{a.epochs}  loss={total / max(nb, 1):.4f}")
+        notes = []
+        if n_skipped: notes.append(f"skipped={n_skipped}")
+        if n_rescued: notes.append(f"rescued={n_rescued}")
+        note = ("  " + "  ".join(notes)) if notes else ""
+        log(f"epoch {epoch + 1}/{a.epochs}  loss={total / max(nb, 1):.4f}{note}")
 
     # ── Encode every plate (rank 0 only; no corruption) ──────────────────
     if is_main:
