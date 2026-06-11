@@ -29,9 +29,16 @@
 </nav>
 
 <nav class="nav-dots" aria-label="Slide navigation">
-  <button class="nav-dot active" data-section="hero"   data-label="SHADOW TRAJECTORY"></button>
-  <button class="nav-dot"        data-section="algo"   data-label="ALGORITHM"></button>
-  <button class="nav-dot"        data-section="status" data-label="TO BE COMPLETED"></button>
+  <button class="nav-dot active" data-section="hero"           data-label="SHADOW TRAJECTORY"></button>
+  <button class="nav-dot"        data-section="algo"           data-label="MAXGROWTH ALGORITHM"></button>
+  <button class="nav-dot"        data-section="results"        data-label="MAXGROWTH RESULTS"></button>
+  <button class="nav-dot"        data-section="analysis"       data-label="MAXGROWTH ANALYSIS"></button>
+  <button class="nav-dot"        data-section="conclusion"     data-label="MAXGROWTH CONCLUSION"></button>
+  <button class="nav-dot"        data-section="embed-ideas"     data-label="EMBEDDING IDEAS"></button>
+  <button class="nav-dot"        data-section="embed-procedure" data-label="EMBEDDING PROCEDURES"></button>
+  <button class="nav-dot"        data-section="embed-results"   data-label="EMBEDDING RESULTS"></button>
+  <button class="nav-dot"        data-section="embed-analysis"  data-label="EMBEDDING ANALYSIS"></button>
+  <button class="nav-dot"        data-section="embed-conclusion" data-label="EMBEDDING CONCLUSION"></button>
 </nav>
 
 <div id="page-wrapper">
@@ -43,10 +50,10 @@
       <h1 class="section-title">
         <span class="glitch" data-text="Shadow Trajectory">Shadow Trajectory</span>
       </h1>
-      <p class="lede" style="font-size: 16px;"><strong class="accent">cells</strong> → <strong class="spark">routes</strong>. The Sviluppo section showed what FP-Growth could see when the unit of analysis was a <em>cell</em> (one location × one 5-min bucket). The Climax section reframes the same 275.9 M records around a stronger primitive: the <em>trajectory</em> of each vehicle, and the platoons that arise as ordered camera sequences traversed together.</p>
+      <p class="lede" style="font-size: 16px;"><strong class="accent">cells</strong> &rarr; <strong class="spark">routes</strong>. The Sviluppo section showed what FP-Growth could see when the unit of analysis was a <em>cell</em> (one location &times; one 5-min bucket). The Climax section reframes the same 275.9 M records around a stronger primitive: the <em>trajectory</em> of each vehicle, and the platoons that arise as ordered camera sequences traversed together.</p>
       <div class="hero-stats" style="margin-top: 44px;">
-        <div class="hero-stat"><div class="v">⟨O, P⟩</div><div class="k">Pattern Shape</div></div>
-        <div class="hero-stat"><div class="v">m · k · d · ε</div><div class="k">Four Parameters</div></div>
+        <div class="hero-stat"><div class="v">&#10216;O, P&#10217;</div><div class="k">Pattern Shape</div></div>
+        <div class="hero-stat"><div class="v">m &middot; k &middot; d &middot; &epsilon;</div><div class="k">Four Parameters</div></div>
         <div class="hero-stat"><div class="v">8 stages</div><div class="k">Spark + Driver pipeline</div></div>
         <div class="hero-stat"><div class="v">VLDB 2024</div><div class="k">Bei et al. — MaxGrowth</div></div>
       </div>
@@ -59,34 +66,32 @@
     <div class="section-inner">
       <p class="kicker">01 / The algorithm, end to end</p>
       <h2 class="section-title">
-        MaxGrowth — <span class="swipe">parameters · pipeline · pruning</span>
+        MaxGrowth — <span class="swipe">parameters &middot; pipeline &middot; pruning</span>
       </h2>
 
-      <!-- four parameters -->
       <div class="param-grid">
         <div class="param">
           <div class="sym">m</div>
-          <div class="flag">--min-size · default 2</div>
+          <div class="flag">--min-size &middot; default 2</div>
           <div class="meaning">minimum plates in a platoon.</div>
         </div>
         <div class="param">
           <div class="sym">k</div>
-          <div class="flag">--min-length · default 3</div>
+          <div class="flag">--min-length &middot; default 3</div>
           <div class="meaning">minimum cameras in the route — the "more than one intersection" rule.</div>
         </div>
         <div class="param">
           <div class="sym">d</div>
-          <div class="flag">--gap · default 1</div>
+          <div class="flag">--gap &middot; default 1</div>
           <div class="meaning">missing-camera tolerance — OCR / occlusion absorption.</div>
         </div>
         <div class="param">
-          <div class="sym">ε</div>
-          <div class="flag">--eps · default 300 s</div>
+          <div class="sym">&epsilon;</div>
+          <div class="flag">--eps &middot; default 300 s</div>
           <div class="meaning">co-arrival window at one camera.</div>
         </div>
       </div>
 
-      <!-- 8 pipeline stages -->
       <div class="pipeline" style="margin-top: 24px;">
         <div class="step spark"><span class="ix">01 · spark</span><span class="label">CSV scan</span></div>
         <div class="step spark"><span class="ix">02 · spark</span><span class="label">prefilter plates</span></div>
@@ -98,52 +103,658 @@
         <div class="step driver"><span class="ix">08 · driver</span><span class="label">maximality + write</span></div>
       </div>
 
-      <!-- key insight as prose, no code block -->
-      <p class="lede" style="margin-top: 22px;"><strong>Local maximality during growth</strong> is the optimization that makes the rest viable. The naive enumerator emits a pattern at every recursion depth ≥ k — millions of redundant prefixes of their own extensions. The local rule fixes this in one line: <em>if any extension preserves the full current membership, the longer route strictly dominates this stack — skip emission</em>.</p>
-      <p style="margin-top: 14px; font-size: 13.5px; line-height: 1.7;">Emitting only when the recursion either shrinks membership or terminates cuts raw patterns by <strong class="spark">10–100×</strong> before the global maximality filter even runs. Combined with an <strong class="accent">inverted-index</strong> dominance check (candidates restricted to patterns containing every member of B, seeded on B's rarest plate), what was an O(N²) post-process at 2.6 M patterns becomes a few seconds on tens of thousands.</p>
+      <p class="lede" style="margin-top: 22px;"><strong>Local maximality during growth</strong> is the optimization that makes the rest viable. The naive enumerator emits a pattern at every recursion depth &ge; k — millions of redundant prefixes of their own extensions. The local rule fixes this in one line: <em>if any extension preserves the full current membership, the longer route strictly dominates this stack — skip emission</em>.</p>
+      <p style="margin-top: 14px; font-size: 13.5px; line-height: 1.7;">Emitting only when the recursion either shrinks membership or terminates cuts raw patterns by <strong class="spark">10–100&times;</strong> before the global maximality filter even runs. Combined with an <strong class="accent">inverted-index</strong> dominance check (candidates restricted to patterns containing every member of B, seeded on B's rarest plate), what was an O(N&sup2;) post-process at 2.6 M patterns becomes a few seconds on tens of thousands.</p>
     </div>
   </section>
 
-  <!-- ═════ 2 — TO BE COMPLETED ═════ -->
-  <section class="section" id="status">
+  <!-- ═════ 2 — RESULTS ═════ -->
+  <section class="section" id="results">
     <div class="section-inner">
-      <p class="kicker">02 / Where it stands</p>
+      <p class="kicker">02 / The full-month run · what came out</p>
       <h2 class="section-title">
-        Implementation <span class="swipe">complete</span>. Validation <span class="glitch" data-text="pending">pending</span>.
+        <span class="swipe">223,184</span> maximal platoons
       </h2>
-      <p class="lede">Every stage is built, tested on synthetic fixtures, and wired into the same Slurm + Spark cluster scripts that ran FP-Growth. Four failure modes were encountered and retired along the way (driver result-size cap, OOM from over-permissive Apriori prefilter, executor module-not-found, O(N²) maximality filter). The remaining work is parameter tuning on real data — matching <code>--min-observations</code> to FP-Growth's <code>min_count=50</code> so the surviving plate set is comparable to the 783-plate FP-Growth result, then promoting day-1 to 31 days.</p>
 
-      <div class="status-banner">
-        <span class="pulse"></span>
-        <span><strong>Status:</strong> pipeline functional through cluster materialization on day-1 data (<strong class="accent">199,949 plates</strong> / <strong class="accent">3.5 M visits</strong> / <strong class="accent">293 k ε-clusters</strong> in ~40 s of Spark time); driver-side enumeration being re-tuned for FP-Growth-equivalent thresholds. Full-month run is the next milestone.</span>
+      <div class="filter-bar" style="margin-top:4px;">
+        <span class="pill"><span class="k">m</span><span class="v">2</span></span>
+        <span class="pill"><span class="k">k</span><span class="v">3</span></span>
+        <span class="pill"><span class="k">d</span><span class="v">1</span></span>
+        <span class="pill"><span class="k">&epsilon;</span><span class="v">300s</span></span>
+        <span class="pill"><span class="k">min-obs</span><span class="v">200</span></span>
+        <span class="pill"><span class="k">max-plates</span><span class="v">100k</span></span>
+        <span class="pill"><span class="k">max-cluster</span><span class="v">50</span></span>
+        <span class="pill"><span class="k">input</span><span class="v">31.csv · 275.9M</span></span>
       </div>
 
-      <table class="failure-table" style="margin-top: 22px;">
+      <div class="spec-grid">
+        <div class="spec"><div class="k">Maximal platoons</div><div class="v">223,184</div><div class="note">&#10216;O, P&#10217; after dominance filter</div></div>
+        <div class="spec"><div class="k">Plates in a platoon</div><div class="v">87,047</div><div class="note">distinct members across all patterns</div></div>
+        <div class="spec"><div class="k">Cameras spanned</div><div class="v">795</div><div class="note">of 977 checkpoints used in routes</div></div>
+        <div class="spec"><div class="k">Peak route / size</div><div class="v">9 &middot; 20</div><div class="note">longest route · largest platoon</div></div>
+      </div>
+
+      <div class="method-row" style="margin-top:20px;grid-template-columns:1.35fr 1fr;align-items:stretch;">
+        <div class="bucket-svg">
+          <div style="font-family:var(--font-head);font-size:11px;letter-spacing:2px;color:var(--ink-dim);text-transform:uppercase;margin-bottom:8px;">Busiest platoon corridors — cameras traversed <span class="spark">in order</span></div>
+          <svg viewBox="0 0 780 372" width="100%" role="img" aria-label="Top platoon corridors as camera routes" style="font-family:var(--font-mono);">
+<defs><marker id="cArrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-dim)"/></marker></defs>
+<text x="20" y="42" font-size="10" letter-spacing="1" fill="var(--ink-dim)" dominant-baseline="middle">CORRIDOR 01</text>
+<text x="118" y="42" font-size="15" font-weight="700" fill="var(--spark)" text-anchor="end" dominant-baseline="middle" style="font-family:var(--font-head);">5,324</text>
+<line x1="150" y1="41" x2="676.0" y2="41" stroke="var(--rule-strong)" stroke-width="1.5"/>
+<circle cx="150.0" cy="41" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="150.0" y="42" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">434</text>
+<line x1="165.0" y1="41" x2="396.0" y2="41" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="413.0" cy="41" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="413.0" y="42" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">404</text>
+<line x1="428.0" y1="41" x2="659.0" y2="41" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="676.0" cy="41" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="676.0" y="42" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">238</text>
+<text x="702.0" y="42" font-size="10" fill="var(--ink-dim)" dominant-baseline="middle">×5.3k</text>
+<text x="20" y="83" font-size="10" letter-spacing="1" fill="var(--ink-dim)" dominant-baseline="middle">CORRIDOR 02</text>
+<text x="118" y="83" font-size="15" font-weight="700" fill="var(--spark)" text-anchor="end" dominant-baseline="middle" style="font-family:var(--font-head);">4,274</text>
+<line x1="150" y1="82" x2="676.0" y2="82" stroke="var(--rule-strong)" stroke-width="1.5"/>
+<circle cx="150.0" cy="82" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="150.0" y="83" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">68</text>
+<line x1="165.0" y1="82" x2="396.0" y2="82" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="413.0" cy="82" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="413.0" y="83" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">181</text>
+<line x1="428.0" y1="82" x2="659.0" y2="82" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="676.0" cy="82" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="676.0" y="83" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">45</text>
+<text x="702.0" y="83" font-size="10" fill="var(--ink-dim)" dominant-baseline="middle">×4.2k</text>
+<text x="20" y="124" font-size="10" letter-spacing="1" fill="var(--ink-dim)" dominant-baseline="middle">CORRIDOR 03</text>
+<text x="118" y="124" font-size="15" font-weight="700" fill="var(--spark)" text-anchor="end" dominant-baseline="middle" style="font-family:var(--font-head);">3,501</text>
+<line x1="150" y1="123" x2="676.0" y2="123" stroke="var(--rule-strong)" stroke-width="1.5"/>
+<circle cx="150.0" cy="123" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="150.0" y="124" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">391</text>
+<line x1="165.0" y1="123" x2="396.0" y2="123" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="413.0" cy="123" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="413.0" y="124" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">375</text>
+<line x1="428.0" y1="123" x2="659.0" y2="123" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="676.0" cy="123" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="676.0" y="124" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">372</text>
+<text x="702.0" y="124" font-size="10" fill="var(--ink-dim)" dominant-baseline="middle">×3.5k</text>
+<text x="20" y="165" font-size="10" letter-spacing="1" fill="var(--ink-dim)" dominant-baseline="middle">CORRIDOR 04</text>
+<text x="118" y="165" font-size="15" font-weight="700" fill="var(--spark)" text-anchor="end" dominant-baseline="middle" style="font-family:var(--font-head);">3,184</text>
+<line x1="150" y1="164" x2="676.0" y2="164" stroke="var(--rule-strong)" stroke-width="1.5"/>
+<circle cx="150.0" cy="164" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="150.0" y="165" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">268</text>
+<line x1="165.0" y1="164" x2="396.0" y2="164" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="413.0" cy="164" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="413.0" y="165" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">478</text>
+<line x1="428.0" y1="164" x2="659.0" y2="164" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="676.0" cy="164" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="676.0" y="165" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">481</text>
+<text x="702.0" y="165" font-size="10" fill="var(--ink-dim)" dominant-baseline="middle">×3.1k</text>
+<text x="20" y="206" font-size="10" letter-spacing="1" fill="var(--ink-dim)" dominant-baseline="middle">CORRIDOR 05</text>
+<text x="118" y="206" font-size="15" font-weight="700" fill="var(--spark)" text-anchor="end" dominant-baseline="middle" style="font-family:var(--font-head);">2,677</text>
+<line x1="150" y1="205" x2="676.0" y2="205" stroke="var(--rule-strong)" stroke-width="1.5"/>
+<circle cx="150.0" cy="205" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="150.0" y="206" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">11</text>
+<line x1="165.0" y1="205" x2="396.0" y2="205" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="413.0" cy="205" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="413.0" y="206" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">227</text>
+<line x1="428.0" y1="205" x2="659.0" y2="205" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="676.0" cy="205" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="676.0" y="206" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">557</text>
+<text x="702.0" y="206" font-size="10" fill="var(--ink-dim)" dominant-baseline="middle">×2.6k</text>
+<text x="20" y="247" font-size="10" letter-spacing="1" fill="var(--ink-dim)" dominant-baseline="middle">CORRIDOR 06</text>
+<text x="118" y="247" font-size="15" font-weight="700" fill="var(--spark)" text-anchor="end" dominant-baseline="middle" style="font-family:var(--font-head);">2,005</text>
+<line x1="150" y1="246" x2="676.0" y2="246" stroke="var(--rule-strong)" stroke-width="1.5"/>
+<circle cx="150.0" cy="246" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="150.0" y="247" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">297</text>
+<line x1="165.0" y1="246" x2="396.0" y2="246" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="413.0" cy="246" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="413.0" y="247" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">278</text>
+<line x1="428.0" y1="246" x2="659.0" y2="246" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="676.0" cy="246" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="676.0" y="247" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">437</text>
+<text x="702.0" y="247" font-size="10" fill="var(--ink-dim)" dominant-baseline="middle">×2.0k</text>
+<text x="20" y="288" font-size="10" letter-spacing="1" fill="var(--ink-dim)" dominant-baseline="middle">CORRIDOR 07</text>
+<text x="118" y="288" font-size="15" font-weight="700" fill="var(--spark)" text-anchor="end" dominant-baseline="middle" style="font-family:var(--font-head);">1,836</text>
+<line x1="150" y1="287" x2="676.0" y2="287" stroke="var(--rule-strong)" stroke-width="1.5"/>
+<circle cx="150.0" cy="287" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="150.0" y="288" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">307</text>
+<line x1="165.0" y1="287" x2="396.0" y2="287" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="413.0" cy="287" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="413.0" y="288" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">442</text>
+<line x1="428.0" y1="287" x2="659.0" y2="287" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="676.0" cy="287" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="676.0" y="288" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">515</text>
+<text x="702.0" y="288" font-size="10" fill="var(--ink-dim)" dominant-baseline="middle">×1.8k</text>
+<text x="20" y="329" font-size="10" letter-spacing="1" fill="var(--ink-dim)" dominant-baseline="middle">CORRIDOR 08</text>
+<text x="118" y="329" font-size="15" font-weight="700" fill="var(--spark)" text-anchor="end" dominant-baseline="middle" style="font-family:var(--font-head);">1,584</text>
+<line x1="150" y1="328" x2="676.0" y2="328" stroke="var(--rule-strong)" stroke-width="1.5"/>
+<circle cx="150.0" cy="328" r="15" fill="var(--bg-panel)" stroke="var(--accent)" stroke-width="2"/>
+<text x="150.0" y="329" font-size="10.5" font-weight="700" fill="var(--accent)" text-anchor="middle" dominant-baseline="middle">330</text>
+<line x1="165.0" y1="328" x2="396.0" y2="328" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="413.0" cy="328" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="413.0" y="329" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">268</text>
+<line x1="428.0" y1="328" x2="659.0" y2="328" stroke="var(--ink-dim)" stroke-width="1.6" marker-end="url(#cArrow)"/>
+<circle cx="676.0" cy="328" r="15" fill="var(--bg-panel)" stroke="var(--spark)" stroke-width="2"/>
+<text x="676.0" y="329" font-size="10.5" font-weight="700" fill="var(--spark)" text-anchor="middle" dominant-baseline="middle">478</text>
+<text x="702.0" y="329" font-size="10" fill="var(--ink-dim)" dominant-baseline="middle">×1.5k</text>
+<circle r="4" fill="var(--sunset)" opacity="0.95"><animateMotion path="M150,41 L676,41" dur="3.6s" repeatCount="indefinite"/></circle>
+<circle r="4" fill="var(--sunset)" opacity="0.95"><animateMotion path="M150,123 L676,123" dur="4.2s" begin="0.8s" repeatCount="indefinite"/></circle>
+<circle r="4" fill="var(--sunset)" opacity="0.95"><animateMotion path="M150,205 L676,205" dur="3.9s" begin="1.6s" repeatCount="indefinite"/></circle>
+</svg>
+          <div style="font-size:10.5px;color:var(--ink-dim);margin-top:8px;line-height:1.5;">Each track is a directed camera route; the number is how many <em>distinct</em> platoons co-traversed it. <span class="spark">Pink</span> nodes are hub cameras recurring across corridors. Travelling dots trace the direction of motion.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="bracketed" style="border-top:3px solid var(--spark);">
+            <div style="font-family:var(--font-head);font-weight:900;font-size:13px;letter-spacing:2px;color:var(--spark);text-shadow:var(--glow-spark);">FLAGSHIP PLATOON</div>
+            <div style="font-family:var(--font-mono);font-size:15px;margin-top:6px;color:var(--ink);">11 &rarr; 227 &rarr; 557</div>
+            <div style="font-size:12px;color:var(--ink-dim);margin-top:4px;"><strong class="spark">20 plates</strong> moved together across these three cameras — the largest single platoon found.</div>
+          </div>
+          <div class="bracketed" style="border-top:3px solid var(--accent);">
+            <div style="font-family:var(--font-head);font-weight:900;font-size:13px;letter-spacing:2px;color:var(--accent);text-shadow:var(--glow-accent);">LONGEST ROUTE</div>
+            <div style="font-family:var(--font-mono);font-size:12px;margin-top:6px;color:var(--ink);word-break:break-all;">306&rarr;330&rarr;478&rarr;279&rarr;190&rarr;555&rarr;250&rarr;361&rarr;205</div>
+            <div style="font-size:12px;color:var(--ink-dim);margin-top:4px;"><strong class="accent">9 cameras</strong> co-traversed by a 2-plate pair — unambiguous shared journey.</div>
+          </div>
+          <div class="bracketed" style="border-top:3px solid var(--jade);">
+            <div style="font-family:var(--font-head);font-weight:900;font-size:13px;letter-spacing:2px;color:var(--jade);text-shadow:var(--glow-jade);">DENSEST CORRIDOR</div>
+            <div style="font-family:var(--font-mono);font-size:15px;margin-top:6px;color:var(--ink);">434 &rarr; 404 &rarr; 238</div>
+            <div style="font-size:12px;color:var(--ink-dim);margin-top:4px;"><strong class="jade">5,324 platoons</strong> share this exact route — the spine of the network.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 3 — DATA ANALYSIS ═════ -->
+  <section class="section" id="analysis">
+    <div class="section-inner">
+      <p class="kicker">03 / Reading the distributions</p>
+      <h2 class="section-title">
+        The <span class="swipe">shape</span> of 223,184 platoons
+      </h2>
+
+      <div class="method-row" style="grid-template-columns:1fr 1.05fr;align-items:start;margin-top:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <figure style="position:relative;background:var(--bg-panel);border:1px solid var(--rule-strong);padding:12px;margin:0;">
+            <svg viewBox="0 0 360 230" width="100%" role="img" aria-label="Route length distribution" style="font-family:var(--font-mono);">
+<line x1="34" y1="202.0" x2="348" y2="202.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="205.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^0</text>
+<line x1="34" y1="166.0" x2="348" y2="166.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="169.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^1</text>
+<line x1="34" y1="130.0" x2="348" y2="130.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="133.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^2</text>
+<line x1="34" y1="94.0" x2="348" y2="94.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="97.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^3</text>
+<line x1="34" y1="58.0" x2="348" y2="58.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="61.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^4</text>
+<line x1="34" y1="22.0" x2="348" y2="22.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="25.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^5</text>
+<rect x="40.0" y="11.7" width="34.9" height="190.3" fill="var(--accent)" opacity="0.85"/>
+<text x="57.4" y="7.7" font-size="8.5" fill="var(--ink)" text-anchor="middle" font-weight="700">193,814</text>
+<text x="57.4" y="216.0" font-size="10" fill="var(--ink-dim)" text-anchor="middle">3</text>
+<rect x="84.9" y="43.3" width="34.9" height="158.7" fill="var(--spark)" opacity="0.85"/>
+<text x="102.3" y="39.3" font-size="8.5" fill="var(--ink)" text-anchor="middle" font-weight="700">25,677</text>
+<text x="102.3" y="216.0" font-size="10" fill="var(--ink-dim)" text-anchor="middle">4</text>
+<rect x="129.7" y="75.5" width="34.9" height="126.5" fill="var(--spark)" opacity="0.85"/>
+<text x="147.1" y="71.5" font-size="8.5" fill="var(--ink)" text-anchor="middle" font-weight="700">3,264</text>
+<text x="147.1" y="216.0" font-size="10" fill="var(--ink-dim)" text-anchor="middle">5</text>
+<rect x="174.6" y="109.0" width="34.9" height="93.0" fill="var(--sunset)" opacity="0.85"/>
+<text x="192.0" y="105.0" font-size="8.5" fill="var(--ink)" text-anchor="middle" font-weight="700">382</text>
+<text x="192.0" y="216.0" font-size="10" fill="var(--ink-dim)" text-anchor="middle">6</text>
+<rect x="219.4" y="144.7" width="34.9" height="57.3" fill="var(--sunset)" opacity="0.85"/>
+<text x="236.9" y="140.7" font-size="8.5" fill="var(--ink)" text-anchor="middle" font-weight="700">39</text>
+<text x="236.9" y="216.0" font-size="10" fill="var(--ink-dim)" text-anchor="middle">7</text>
+<rect x="264.3" y="171.6" width="34.9" height="30.4" fill="var(--sunset)" opacity="0.85"/>
+<text x="281.7" y="167.6" font-size="8.5" fill="var(--ink)" text-anchor="middle" font-weight="700">7</text>
+<text x="281.7" y="216.0" font-size="10" fill="var(--ink-dim)" text-anchor="middle">8</text>
+<rect x="309.1" y="202.0" width="34.9" height="0.0" fill="var(--sunset)" opacity="0.85"/>
+<text x="326.6" y="198.0" font-size="8.5" fill="var(--ink)" text-anchor="middle" font-weight="700">1</text>
+<text x="326.6" y="216.0" font-size="10" fill="var(--ink-dim)" text-anchor="middle">9</text>
+<text x="197" y="226" font-size="9" fill="var(--ink-dim)" text-anchor="middle">route length · cameras (k)</text>
+</svg>
+            <figcaption style="font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);margin-top:6px;line-height:1.45;">Route length is heavily 3-camera dominated (the <code>k=3</code> floor), decaying ~10&times; per added camera — a clean power-law tail out to 9.</figcaption>
+          </figure>
+          <figure style="position:relative;background:var(--bg-panel);border:1px solid var(--rule-strong);padding:12px;margin:0;">
+            <svg viewBox="0 0 360 230" width="100%" role="img" aria-label="Members per platoon distribution" style="font-family:var(--font-mono);">
+<line x1="34" y1="202.0" x2="348" y2="202.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="205.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^0</text>
+<line x1="34" y1="166.0" x2="348" y2="166.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="169.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^1</text>
+<line x1="34" y1="130.0" x2="348" y2="130.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="133.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^2</text>
+<line x1="34" y1="94.0" x2="348" y2="94.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="97.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^3</text>
+<line x1="34" y1="58.0" x2="348" y2="58.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="61.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^4</text>
+<line x1="34" y1="22.0" x2="348" y2="22.0" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="25.0" font-size="8" fill="var(--ink-dim)" text-anchor="end">10^5</text>
+<rect x="39.0" y="14.8" width="30.2" height="187.2" fill="var(--accent)" opacity="0.85"/>
+<text x="54.1" y="10.8" font-size="8" fill="var(--ink)" text-anchor="middle" font-weight="700">158,647</text>
+<text x="54.1" y="216.0" font-size="9.5" fill="var(--ink-dim)" text-anchor="middle">2</text>
+<rect x="78.2" y="36.5" width="30.2" height="165.5" fill="var(--jade)" opacity="0.85"/>
+<text x="93.4" y="32.5" font-size="8" fill="var(--ink)" text-anchor="middle" font-weight="700">39,659</text>
+<text x="93.4" y="216.0" font-size="9.5" fill="var(--ink-dim)" text-anchor="middle">3</text>
+<rect x="117.5" y="52.6" width="30.2" height="149.4" fill="var(--jade)" opacity="0.85"/>
+<text x="132.6" y="48.6" font-size="8" fill="var(--ink)" text-anchor="middle" font-weight="700">14,145</text>
+<text x="132.6" y="216.0" font-size="9.5" fill="var(--ink-dim)" text-anchor="middle">4</text>
+<rect x="156.8" y="66.8" width="30.2" height="135.2" fill="var(--jade)" opacity="0.85"/>
+<text x="171.9" y="62.8" font-size="8" fill="var(--ink)" text-anchor="middle" font-weight="700">5,706</text>
+<text x="171.9" y="216.0" font-size="9.5" fill="var(--ink-dim)" text-anchor="middle">5</text>
+<rect x="196.0" y="79.0" width="30.2" height="123.0" fill="var(--sunset)" opacity="0.85"/>
+<text x="211.1" y="75.0" font-size="8" fill="var(--ink)" text-anchor="middle" font-weight="700">2,609</text>
+<text x="211.1" y="216.0" font-size="9.5" fill="var(--ink-dim)" text-anchor="middle">6</text>
+<rect x="235.2" y="91.4" width="30.2" height="110.6" fill="var(--sunset)" opacity="0.85"/>
+<text x="250.4" y="87.4" font-size="8" fill="var(--ink)" text-anchor="middle" font-weight="700">1,183</text>
+<text x="250.4" y="216.0" font-size="9.5" fill="var(--ink-dim)" text-anchor="middle">7</text>
+<rect x="274.5" y="102.4" width="30.2" height="99.6" fill="var(--sunset)" opacity="0.85"/>
+<text x="289.6" y="98.4" font-size="8" fill="var(--ink)" text-anchor="middle" font-weight="700">584</text>
+<text x="289.6" y="216.0" font-size="9.5" fill="var(--ink-dim)" text-anchor="middle">8</text>
+<rect x="313.8" y="98.2" width="30.2" height="103.8" fill="var(--sunset)" opacity="0.85"/>
+<text x="328.9" y="94.2" font-size="8" fill="var(--ink)" text-anchor="middle" font-weight="700">763</text>
+<text x="328.9" y="216.0" font-size="9.5" fill="var(--ink-dim)" text-anchor="middle">9+</text>
+<text x="197" y="226" font-size="9" fill="var(--ink-dim)" text-anchor="middle">platoon size · plates (m)</text>
+</svg>
+            <figcaption style="font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);margin-top:6px;line-height:1.45;">71% of platoons are pairs; the long tail of 6–20-plate platoons is the real organised-fleet signal.</figcaption>
+          </figure>
+        </div>
+
+        <div>
+          <table class="k-table">
+            <thead>
+              <tr><th>top corridor (route)</th><th>len</th><th class="count">platoons</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>434&rarr;404&rarr;238</td><td>3</td><td class="count">5,324</td></tr>
+              <tr><td>68&rarr;181&rarr;45</td><td>3</td><td class="count">4,274</td></tr>
+              <tr><td>391&rarr;375&rarr;372</td><td>3</td><td class="count">3,501</td></tr>
+              <tr><td>268&rarr;478&rarr;481</td><td>3</td><td class="count">3,184</td></tr>
+              <tr><td>11&rarr;227&rarr;557</td><td>3</td><td class="count">2,677</td></tr>
+              <tr><td>297&rarr;278&rarr;437</td><td>3</td><td class="count">2,005</td></tr>
+              <tr><td>307&rarr;442&rarr;515</td><td>3</td><td class="count">1,836</td></tr>
+              <tr><td>330&rarr;268&rarr;478</td><td>3</td><td class="count">1,584</td></tr>
+            </tbody>
+          </table>
+          <div style="display:flex;gap:10px;margin-top:12px;">
+            <div class="bracketed" style="flex:1;padding:12px 14px;">
+              <div style="font-size:10px;letter-spacing:2px;color:var(--ink-dim);text-transform:uppercase;">Hub cameras</div>
+              <div style="font-family:var(--font-mono);font-size:12.5px;margin-top:5px;color:var(--ink);line-height:1.6;"><strong class="spark">434</strong> &middot; <strong class="spark">404</strong> &middot; <strong class="spark">238</strong> &middot; 68 &middot; 478 carry the most routes (24k+ each).</div>
+            </div>
+            <div class="bracketed" style="flex:1;padding:12px 14px;">
+              <div style="font-size:10px;letter-spacing:2px;color:var(--ink-dim);text-transform:uppercase;">Super-connectors</div>
+              <div style="font-family:var(--font-mono);font-size:12.5px;margin-top:5px;color:var(--ink);line-height:1.6;">plate <strong class="accent">490759</strong> appears in <strong class="accent">172</strong> platoons — likely transit / commercial.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="caveat">
+        <strong>Reading note.</strong> The 3-camera mode is an artefact of the <code>k=3</code> floor, not a ceiling on real behaviour — raising <code>k</code> sharpens precision at the cost of recall. The pair-heavy size distribution mirrors FP-Growth's, but every MaxGrowth pair here is backed by an <em>ordered ≥3-camera route</em>, not a single shared bucket.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 4 — CONCLUSION ═════ -->
+  <section class="section" id="conclusion">
+    <div class="section-inner">
+      <p class="kicker">04 / What the trajectory turn changes</p>
+      <h2 class="section-title">
+        From <span class="glitch" data-text="cells">cells</span> to <span class="swipe">routes</span>
+      </h2>
+
+      <table class="failure-table" style="margin-top:8px;">
         <thead>
-          <tr><th>open item</th><th>state</th><th>what unblocks it</th></tr>
+          <tr><th>dimension</th><th>FP-Growth · Sviluppo</th><th>MaxGrowth · Climax</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>unit of evidence</strong></td><td>one (location &times; 5-min cell)</td><td class="fix">ordered route of &ge;3 cameras</td></tr>
+          <tr><td><strong>what "together" means</strong></td><td>shared a bucket, unordered</td><td class="fix">co-traversed a directed path</td></tr>
+          <tr><td><strong>output shape</strong></td><td>5,447 convoys / 783 plates</td><td class="fix">223,184 platoons / 87,047 plates</td></tr>
+          <tr><td><strong>missed-detection tolerance</strong></td><td>none (dual-grid offset only)</td><td class="fix">d=1 gap absorbs OCR / occlusion</td></tr>
+          <tr><td><strong>false-positive resistance</strong></td><td>weak — crowds look like convoys</td><td class="fix">strong — a 3-hop path is hard to fake</td></tr>
+        </tbody>
+      </table>
+
+      <div class="forward-grid" style="margin-top:18px;">
+        <div class="forward-col">
+          <h3>What the routes revealed</h3>
+          <p>A handful of <strong>hub corridors</strong> (434&rarr;404&rarr;238 and its kin) form a connected backbone that thousands of platoons share — the city's de-facto convoy arteries, invisible to a cell-by-cell view.</p>
+          <p>The size tail (platoons of 6–20 plates on a fixed route) is the signal FP-Growth could only hint at: <strong>persistent groups moving as a unit</strong>, now with directional proof.</p>
+        </div>
+        <div class="forward-col right">
+          <h3>Honest limits</h3>
+          <p>The two plate counts are <em>not</em> a like-for-like win — MaxGrowth ran a looser prefilter (<code>min-obs 200</code> over 31 days) than FP-Growth's <code>min_count 50</code>. The advance is <strong>qualitative</strong>: stronger evidence per pattern, not merely more patterns.</p>
+          <p>Next: fuse these routes with the FP-Growth convoys and the embedding clusters into one consensus-scored fleet registry — see <a href="final.html" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent);"><strong>Conclusione</strong></a>.</p>
+        </div>
+      </div>
+
+      <div class="status-banner" style="background:color-mix(in srgb, var(--jade) 10%, transparent);border-color:color-mix(in srgb, var(--jade) 40%, transparent);border-left-color:var(--jade);">
+        <span class="pulse" style="background:var(--jade);box-shadow:var(--glow-jade);"></span>
+        <span><strong>Status:</strong> full-month MaxGrowth run <strong class="jade">complete</strong> — 275.9 M records &rarr; 223,184 maximal platoons across 795 cameras, on the same Slurm + Spark cluster as FP-Growth.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 5 — EMBEDDING IDEAS ═════ -->
+  <section class="section" id="embed-ideas">
+    <div class="section-inner">
+      <p class="kicker">05 / The third lens · trajectory embedding</p>
+      <h2 class="section-title">
+        Method 3 — <span class="swipe">routes as vectors</span>
+      </h2>
+
+      <p class="lede" style="font-size:16px;">FP-Growth scored vehicles by <em>which bucket they shared</em>. MaxGrowth scored them by <em>which ordered route they co-traversed</em>. <strong>Embedding</strong> scores them by a softer signal still: <em>how similar their entire month-long trajectory is to another plate's</em>. Two cars sharing a depot, two taxis working the same airport circuit, two delivery vans on the same logistics loop — none of these need to be <em>simultaneously</em> at the same camera. They just need their route shapes to rhyme.</p>
+
+      <div class="param-grid" style="margin-top:18px;">
+        <div class="param">
+          <div class="sym" style="font-size:34px;">t2vec</div>
+          <div class="flag">Li et al. · ICDE 2018</div>
+          <div class="meaning">a sequence-to-sequence denoising autoencoder originally for GPS tracks, repurposed here for ANPR camera trajectories.</div>
+        </div>
+        <div class="param">
+          <div class="sym">256-d</div>
+          <div class="flag">fixed embedding</div>
+          <div class="meaning">a plate of 10 cameras and a plate of 3,202 cameras both compress to the same vector — the GRU's final hidden state.</div>
+        </div>
+        <div class="param">
+          <div class="sym">0.3</div>
+          <div class="flag">--drop-prob (denoising)</div>
+          <div class="meaning">30% of input tokens are dropped before encoding; the decoder must reconstruct the <em>clean</em> sequence — buys robustness to OCR / occlusion gaps.</div>
+        </div>
+        <div class="param">
+          <div class="sym">cos</div>
+          <div class="flag">L2-normalized → cosine</div>
+          <div class="meaning">post-train, embeddings are unit-norm; HDBSCAN clusters by cosine-like distance — two route shapes are close iff they share <em>direction</em> not <em>magnitude</em>.</div>
+        </div>
+      </div>
+
+      <div class="method-row" style="margin-top:22px;grid-template-columns:1fr 1fr;">
+        <div class="bracketed" style="border-top:3px solid var(--spark);">
+          <div style="font-family:var(--font-head);font-weight:900;font-size:12px;letter-spacing:2px;color:var(--spark);text-shadow:var(--glow-spark);">WHAT FP-GROWTH CAN'T SEE</div>
+          <div style="font-size:13px;color:var(--ink);margin-top:6px;line-height:1.6;">Two taxis driving the airport-loop on Mondays and the city-loop on Tuesdays — same fleet, different routes daily. No bucket they share in great numbers. <strong class="spark">Invisible</strong> to bucket-co-occurrence.</div>
+        </div>
+        <div class="bracketed" style="border-top:3px solid var(--accent);">
+          <div style="font-family:var(--font-head);font-weight:900;font-size:12px;letter-spacing:2px;color:var(--accent);text-shadow:var(--glow-accent);">WHAT MAXGROWTH CAN'T SEE</div>
+          <div style="font-size:13px;color:var(--ink);margin-top:6px;line-height:1.6;">A 200-plate corporate fleet whose vehicles cover routes <em>similar</em> but not <em>identical</em>. Each pair's d=1 gap tolerance is too tight when the shared structure is route-statistical, not route-exact. <strong class="accent">Fragmented</strong> into many tiny platoons.</div>
+        </div>
+      </div>
+
+      <p class="lede" style="font-size:13.5px;margin-top:20px;">The embedding asks: <em>"What is a vehicle's route-personality, in 256 numbers?"</em> Two plates with similar personalities are companion candidates — to be confirmed downstream by actual physical co-occurrence in the raw stream.</p>
+    </div>
+  </section>
+
+  <!-- ═════ 6 — EMBEDDING PROCEDURES ═════ -->
+  <section class="section" id="embed-procedure">
+    <div class="section-inner">
+      <p class="kicker">06 / The pipeline · three engines</p>
+      <h2 class="section-title">
+        Procedure — <span class="swipe">Spark &middot; PyTorch &middot; cuML</span>
+      </h2>
+
+      <p class="lede" style="font-size:14.5px;">Hybrid by design. The data-parallel ETL stays on the existing Spark cluster (no GPU dependency, no kernel allocations); the model and the clustering move to the 4&times;H200 box. Three scripts, three engines, one consensus output.</p>
+
+      <div class="pipeline" style="margin-top:18px;grid-template-columns:repeat(3,1fr);">
+        <div class="step spark"><span class="ix">stage 1 · spark cluster</span><span class="label">build_sequences.py</span></div>
+        <div class="step driver"><span class="ix">stage 2 · 4&times;H200 GPU</span><span class="label">train_encode.py</span></div>
+        <div class="step spark"><span class="ix">stage 3 · 1&times;H200 GPU</span><span class="label">cluster_confirm.py</span></div>
+      </div>
+
+      <div class="method-row" style="margin-top:24px;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start;">
+        <div class="bracketed">
+          <div style="font-family:var(--font-head);font-weight:900;font-size:12px;letter-spacing:2px;color:var(--spark);">STAGE 1 &middot; SPARK</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);margin-top:6px;">prefilter &rarr; trajectories</div>
+          <div style="font-size:12.5px;margin-top:8px;line-height:1.55;">
+            275.9 M records &rarr; sort each plate by time &rarr; emit Parquet of <code>(plate, cameras[], times[], n)</code>. Bounded by host memory thanks to <code>--max-plates</code> and <code>--min-observations</code> prefilters; the existing <code>cluster.sbatch</code> runs it unchanged.
+          </div>
+          <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-dim);margin-top:8px;line-height:1.55;">
+            output: <strong class="spark">3,830,566</strong> sequences<br>
+            min=10 &middot; median=38 &middot; mean=62.5 &middot; max=3,202 cameras
+          </div>
+        </div>
+        <div class="bracketed">
+          <div style="font-family:var(--font-head);font-weight:900;font-size:12px;letter-spacing:2px;color:var(--accent);">STAGE 2 &middot; PYTORCH</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);margin-top:6px;">denoising GRU AE</div>
+          <div style="font-size:12.5px;margin-top:8px;line-height:1.55;">
+            2-layer GRU encoder &rarr; 256-d hidden state &rarr; 2-layer GRU decoder reconstructs the <em>clean</em> sequence from a <em>corrupted</em> input. Per-plate embedding is the encoder's final hidden state. Trained DDP across 4 H200s; bf16 autocast + bucket batching (32 buckets) + decoder TBPTT (chunk 256) for stability on the 3,202-token tail.
+          </div>
+          <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-dim);margin-top:8px;line-height:1.55;">
+            output: <strong class="accent">3,830,566 &times; 256</strong> embeddings<br>
+            loss: 2.84 &rarr; 2.18 across 10 epochs
+          </div>
+        </div>
+        <div class="bracketed">
+          <div style="font-family:var(--font-head);font-weight:900;font-size:12px;letter-spacing:2px;color:var(--jade);">STAGE 3 &middot; CUML</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);margin-top:6px;">HDBSCAN + confirm</div>
+          <div style="font-size:12.5px;margin-top:8px;line-height:1.55;">
+            cuML HDBSCAN on L2-normalized embeddings (<code>min_cluster_size=3</code>) &rarr; candidate fleets. For each candidate, re-read the raw CSV and count how many <em>(camera, &epsilon;-window)</em> events actually contain &ge; 2 members of the cluster. Only clusters with &ge; 3 such windows are <strong class="jade">confirmed</strong>.
+          </div>
+          <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-dim);margin-top:8px;line-height:1.55;">
+            output: <strong class="jade">fleets.csv</strong> &mdash;<br>
+            12,708 candidates &middot; 4,041 confirmed
+          </div>
+        </div>
+      </div>
+
+      <p class="caveat" style="margin-top:22px;font-size:12.5px;line-height:1.55;">
+        <strong>Why the confirmation step exists.</strong> Two commuters who drive the same road every morning for a month produce nearly identical embeddings — but they're <em>not companions</em>. The embedding identifies <em>route similarity</em>; the raw-CSV co-occurrence filter promotes it to <em>actual companionship</em>. This is the architectural decision that distinguishes the embedding pipeline from naive trajectory clustering.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═════ 7 — EMBEDDING RESULTS ═════ -->
+  <section class="section" id="embed-results">
+    <div class="section-inner">
+      <p class="kicker">07 / The full-month run &middot; what came out</p>
+      <h2 class="section-title">
+        <span class="swipe">4,041</span> confirmed companion groups
+      </h2>
+
+      <div class="filter-bar" style="margin-top:4px;">
+        <span class="pill"><span class="k">hidden</span><span class="v">256</span></span>
+        <span class="pill"><span class="k">epochs</span><span class="v">10</span></span>
+        <span class="pill"><span class="k">batch</span><span class="v">128/rank</span></span>
+        <span class="pill"><span class="k">buckets</span><span class="v">32</span></span>
+        <span class="pill"><span class="k">tbptt</span><span class="v">256</span></span>
+        <span class="pill"><span class="k">drop</span><span class="v">0.3</span></span>
+        <span class="pill"><span class="k">algo</span><span class="v">hdbscan</span></span>
+        <span class="pill"><span class="k">min-cooccur</span><span class="v">3 windows</span></span>
+      </div>
+
+      <div class="spec-grid">
+        <div class="spec"><div class="k">Embeddings</div><div class="v">3.83 M</div><div class="note">one 256-dim vector per plate</div></div>
+        <div class="spec"><div class="k">Candidate clusters</div><div class="v">12,708</div><div class="note">from HDBSCAN, 97.3% noise</div></div>
+        <div class="spec"><div class="k">Confirmed fleets</div><div class="v">4,041</div><div class="note">31.8% of candidates pass &ge; 3 co-occur windows</div></div>
+        <div class="spec"><div class="k">Largest confirmed</div><div class="v">759</div><div class="note">plates &middot; cluster 11981</div></div>
+      </div>
+
+      <div class="method-row" style="margin-top:20px;grid-template-columns:1fr 1.05fr;align-items:start;">
+        <figure style="position:relative;background:var(--bg-panel);border:1px solid var(--rule-strong);padding:14px;margin:0;">
+          <div style="font-family:var(--font-head);font-size:11px;letter-spacing:2px;color:var(--ink-dim);text-transform:uppercase;margin-bottom:8px;">Density grows with fleet size</div>
+          <svg viewBox="0 0 360 210" width="100%" role="img" aria-label="Density-vs-size relationship" style="font-family:var(--font-mono);">
+<line x1="34" y1="180" x2="348" y2="180" stroke="var(--rule)" stroke-width="1"/>
+<line x1="34" y1="20"  x2="34"  y2="180" stroke="var(--rule)" stroke-width="1"/>
+<text x="28" y="22"  font-size="9" fill="var(--ink-dim)" text-anchor="end">40</text>
+<text x="28" y="60"  font-size="9" fill="var(--ink-dim)" text-anchor="end">30</text>
+<text x="28" y="100" font-size="9" fill="var(--ink-dim)" text-anchor="end">20</text>
+<text x="28" y="140" font-size="9" fill="var(--ink-dim)" text-anchor="end">10</text>
+<text x="28" y="180" font-size="9" fill="var(--ink-dim)" text-anchor="end">0</text>
+<rect x="48"  y="177" width="36" height="3"   fill="var(--accent)" opacity="0.85"/>
+<text x="66"  y="170" font-size="9" fill="var(--ink)" text-anchor="middle" font-weight="700">0.7</text>
+<text x="66"  y="195" font-size="9" fill="var(--ink-dim)" text-anchor="middle">3-5</text>
+<rect x="94"  y="174" width="36" height="6"   fill="var(--accent)" opacity="0.85"/>
+<text x="112" y="167" font-size="9" fill="var(--ink)" text-anchor="middle" font-weight="700">1.4</text>
+<text x="112" y="195" font-size="9" fill="var(--ink-dim)" text-anchor="middle">6-20</text>
+<rect x="140" y="163" width="36" height="17"  fill="var(--accent)" opacity="0.85"/>
+<text x="158" y="156" font-size="9" fill="var(--ink)" text-anchor="middle" font-weight="700">4.1</text>
+<text x="158" y="195" font-size="9" fill="var(--ink-dim)" text-anchor="middle">21-50</text>
+<rect x="186" y="147" width="36" height="33"  fill="var(--sunset)" opacity="0.85"/>
+<text x="204" y="140" font-size="9" fill="var(--ink)" text-anchor="middle" font-weight="700">8.2</text>
+<text x="204" y="195" font-size="9" fill="var(--ink-dim)" text-anchor="middle">51-100</text>
+<rect x="232" y="118" width="36" height="62"  fill="var(--spark)" opacity="0.85"/>
+<text x="250" y="111" font-size="9" fill="var(--ink)" text-anchor="middle" font-weight="700">15.5</text>
+<text x="250" y="195" font-size="9" fill="var(--ink-dim)" text-anchor="middle">101-200</text>
+<rect x="278" y="109" width="36" height="71"  fill="var(--spark)" opacity="0.85"/>
+<text x="296" y="102" font-size="9" fill="var(--ink)" text-anchor="middle" font-weight="700">17.7</text>
+<text x="296" y="195" font-size="9" fill="var(--ink-dim)" text-anchor="middle">201-500</text>
+<rect x="324" y="40"  width="20" height="140" fill="var(--jade)" opacity="0.95"/>
+<text x="334" y="33"  font-size="9" fill="var(--ink)" text-anchor="middle" font-weight="700">35.3</text>
+<text x="334" y="195" font-size="9" fill="var(--ink-dim)" text-anchor="middle">501+</text>
+<text x="190" y="208" font-size="9" fill="var(--ink-dim)" text-anchor="middle">fleet size (plates) &middot; avg co-occur pairs / plate</text>
+</svg>
+          <figcaption style="font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);margin-top:6px;line-height:1.45;">Small "fleets" (3-20) barely scrape past the confirmation floor (avg &lt; 2 pairs/plate). Large fleets (200+) are <strong class="jade">genuinely tight</strong> with &gt;15 pairs per member. Real corporate fleets dominate the right tail.</figcaption>
+        </figure>
+
+        <div>
+          <table class="k-table">
+            <thead>
+              <tr><th>top confirmed fleet</th><th class="count">plates</th><th class="count">windows</th><th class="count">pairs</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>id 10184</td><td class="count">386</td><td class="count">54,189</td><td class="count">36,601</td></tr>
+              <tr><td>id 11477</td><td class="count">86</td><td class="count">49,549</td><td class="count">3,385</td></tr>
+              <tr><td>id 11541</td><td class="count">52</td><td class="count">24,482</td><td class="count">1,310</td></tr>
+              <tr><td>id 12227</td><td class="count">169</td><td class="count">21,301</td><td class="count">8,515</td></tr>
+              <tr><td>id 5428</td><td class="count">167</td><td class="count">20,920</td><td class="count">10,128</td></tr>
+              <tr><td>id 9981</td><td class="count">198</td><td class="count">17,173</td><td class="count">9,691</td></tr>
+              <tr><td>id 11981 <strong class="jade">&starf;</strong></td><td class="count">759</td><td class="count">12,742</td><td class="count">42,386</td></tr>
+              <tr><td>id 11478</td><td class="count">685</td><td class="count">12,604</td><td class="count">26,718</td></tr>
+            </tbody>
+          </table>
+          <div style="display:flex;gap:10px;margin-top:12px;">
+            <div class="bracketed" style="flex:1;padding:12px 14px;">
+              <div style="font-size:10px;letter-spacing:2px;color:var(--ink-dim);text-transform:uppercase;">Training loss</div>
+              <div style="font-family:var(--font-mono);font-size:13px;margin-top:5px;color:var(--ink);line-height:1.5;">2.84 &rarr; <strong class="spark">2.18</strong> over 10 epochs; perplexity &asymp; 8.8 against vocab of 857. Monotonic descent, no NaN.</div>
+            </div>
+            <div class="bracketed" style="flex:1;padding:12px 14px;">
+              <div style="font-size:10px;letter-spacing:2px;color:var(--ink-dim);text-transform:uppercase;">Cluster 11981 &starf;</div>
+              <div style="font-family:var(--font-mono);font-size:13px;margin-top:5px;color:var(--ink);line-height:1.5;">759 plates · 55.8 pairs/plate (<strong class="jade">tight</strong>). A real corporate fleet, not a sprawl.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 8 — EMBEDDING ANALYSIS ═════ -->
+  <section class="section" id="embed-analysis">
+    <div class="section-inner">
+      <p class="kicker">08 / Cross-check vs. FP-Growth ground truth</p>
+      <h2 class="section-title">
+        What the embedding <span class="glitch" data-text="missed">missed</span>, what it <span class="swipe">added</span>
+      </h2>
+
+      <p class="lede" style="font-size:14px;">We hold the FP-Growth output from Sviluppo as a high-precision oracle for <em>small specific convoys</em>. Checking the embedding pipeline against it surfaces a clear pattern: it doesn't replicate FP-Growth — it covers different ground.</p>
+
+      <table class="failure-table" style="margin-top:14px;">
+        <thead>
+          <tr><th>FP-Growth finding</th><th>plates</th><th>where embeddings put them</th><th>verdict</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>day-1 smoke</strong></td>
-            <td>tuning <code>--min-observations</code></td>
-            <td class="fix">target ≈ FP-Growth's 783-plate set</td>
+            <td><strong>top FP-Growth pair</strong> (628&times; in 31 days)</td>
+            <td><code>477634 · 491688</code></td>
+            <td>both in cluster <strong class="spark">11727</strong> — but lumped with 206 others</td>
+            <td class="fix">found, low resolution</td>
           </tr>
           <tr>
-            <td><strong>full-month run</strong></td>
-            <td>blocked on day-1</td>
-            <td class="fix">promote params; expect 30–90 min wall</td>
+            <td><strong>day-1 top pair</strong> (25&times;/day)</td>
+            <td><code>323390 · 420190</code></td>
+            <td>split: 323390 &rarr; cluster 11541, 420190 &rarr; cluster 11477</td>
+            <td>separated</td>
           </tr>
           <tr>
-            <td>distributed maximality filter</td>
-            <td>not yet needed at current scale</td>
-            <td class="fix">broadcast pattern set + partition dominance check</td>
+            <td><strong>4-plate always-together set</strong></td>
+            <td><code>3271142 · 16972992 · 16970573 · 511670</code></td>
+            <td><strong class="accent">all noise (-1)</strong> — no cluster</td>
+            <td>missed</td>
+          </tr>
+          <tr>
+            <td><strong>6-car permanent convoy</strong> (~1,548 days)</td>
+            <td>same 4 plus <code>18150551 · 3542309</code></td>
+            <td><strong class="accent">all noise (-1)</strong> — no cluster</td>
+            <td>missed</td>
           </tr>
         </tbody>
       </table>
 
-      <p style="font-size: 13px; line-height: 1.7; margin-top: 24px;">
-        See <a href="final.html" style="color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent);"><strong>Conclusione</strong></a> for the comprehensive view (when the validation lands).
-      </p>
+      <div class="forward-grid" style="margin-top:20px;">
+        <div class="forward-col">
+          <h3>Why small specific convoys went noise</h3>
+          <p>The denoising autoencoder embeds a plate by its <strong>route shape</strong>. Six cars that always travel together as a unit produce six near-identical trajectories — but they also produce six <em>unique</em> trajectories in 3.83 M-dim space. HDBSCAN's density requirement needs &ge; 3 plates within mutual-reachability of each other; six near-clones can land in a region too sparse to qualify, and tag as <strong class="accent">noise</strong>.</p>
+          <p>This is structural, not a bug. <em>Route shape</em> ≠ <em>physical co-travel</em>.</p>
+        </div>
+        <div class="forward-col right">
+          <h3>What the embedding caught that the others didn't</h3>
+          <p>The 195 confirmed fleets of size &gt; 50 — that's 195 large-scale operations FP-Growth could only express as <strong class="sunset">C(N,k)</strong> bloated combinatorial blowups. MaxGrowth could capture them only as fragmented per-route platoons, never as one entity.</p>
+          <p>Cluster <strong class="jade">11981</strong> alone is 759 plates with 55.8 pairs/plate density. That's a real corporate fleet — and FP-Growth would have surfaced it as ~30,000 separate convoys.</p>
+        </div>
+      </div>
+
+      <div class="caveat" style="margin-top:18px;">
+        <strong>The honest reading.</strong> FP-Growth, MaxGrowth and the embedding pipeline are answering three different questions on the same data: "who shares a bucket?", "who co-traverses an ordered route?", "whose route-personality rhymes with whom's?" Cross-validating across all three is how the registry in <em>Conclusione</em> gets built.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 9 — EMBEDDING CONCLUSION ═════ -->
+  <section class="section" id="embed-conclusion">
+    <div class="section-inner">
+      <p class="kicker">09 / What the embedding turn changes</p>
+      <h2 class="section-title">
+        From <span class="glitch" data-text="routes">routes</span> to <span class="swipe">vectors</span>
+      </h2>
+
+      <table class="failure-table" style="margin-top:8px;">
+        <thead>
+          <tr><th>dimension</th><th>FP-Growth · Sviluppo</th><th>MaxGrowth · Climax §1-4</th><th>Embedding · Climax §5-9</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>unit of evidence</strong></td>
+            <td>shared (camera, 5-min) cell</td>
+            <td>ordered ≥3-camera route</td>
+            <td class="fix">256-dim route-shape vector</td>
+          </tr>
+          <tr>
+            <td><strong>signal</strong></td>
+            <td>direct co-occurrence</td>
+            <td>directed co-traversal</td>
+            <td class="fix">route similarity + confirmation</td>
+          </tr>
+          <tr>
+            <td><strong>best at</strong></td>
+            <td>tight small convoys</td>
+            <td>directional permanent groups</td>
+            <td class="fix">large corporate / taxi fleets</td>
+          </tr>
+          <tr>
+            <td><strong>worst at</strong></td>
+            <td>large fleets (C(N,k) blowup)</td>
+            <td>route-statistical groups</td>
+            <td class="fix">small specific convoys (noise)</td>
+          </tr>
+          <tr>
+            <td><strong>output shape</strong></td>
+            <td>5,447 convoys / 783 plates</td>
+            <td>223,184 platoons / 87,047 plates</td>
+            <td class="fix">4,041 fleets / 102,779 plates</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="forward-grid" style="margin-top:18px;">
+        <div class="forward-col">
+          <h3>What the vectors revealed</h3>
+          <p><strong>4,041 confirmed companion groups</strong> across 102,779 plates — 31.8% of HDBSCAN candidates survive co-occurrence confirmation. Density grows with size: the largest fleets are also the tightest, the signature of <em>real organised operations</em> as opposed to lucky-coincidence groupings.</p>
+          <p>195 fleets of size &gt; 50 — a population FP-Growth's combinatorial blowup obscured and MaxGrowth's ordered-route requirement fragmented.</p>
+        </div>
+        <div class="forward-col right">
+          <h3>Honest limits, again</h3>
+          <p>The 97% noise rate isn't a failure — most of 3.83 M plates are <em>not</em> in any companion group, and HDBSCAN correctly leaves them alone. But the small permanent convoys (6-car set, 4-plate always-together) that FP-Growth surfaces cleanly are <em>invisible</em> here.</p>
+          <p>The three pipelines are complementary, not redundant. <a href="final.html" style="color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent);"><strong>Conclusione</strong></a> fuses them.</p>
+        </div>
+      </div>
+
+      <div class="status-banner" style="margin-top:18px;background:color-mix(in srgb, var(--accent) 12%, transparent);border-color:color-mix(in srgb, var(--accent) 40%, transparent);border-left-color:var(--accent);">
+        <span class="pulse" style="background:var(--accent);box-shadow:var(--glow-accent);"></span>
+        <span><strong>Status:</strong> embedding pipeline <strong class="accent">end-to-end complete</strong> — 3.83 M sequences &rarr; 256-dim vectors &rarr; 12,708 clusters &rarr; 4,041 confirmed fleets, all checked against FP-Growth ground truth. Ready for cross-method consensus.</span>
+      </div>
     </div>
   </section>
 
