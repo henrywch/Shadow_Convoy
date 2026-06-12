@@ -487,12 +487,12 @@
         Procedure — <span class="swipe">Spark &middot; PyTorch &middot; cuML</span>
       </h2>
 
-      <p class="lede" style="font-size:14.5px;">Hybrid by design. The data-parallel ETL stays on the existing Spark cluster (no GPU dependency, no kernel allocations); the model and the clustering move to the 4&times;H200 box. Three scripts, three engines, one consensus output.</p>
+      <p class="lede" style="font-size:14.5px;">Hybrid by design. The data-parallel ETL stays on the existing Spark cluster (no GPU dependency, no kernel allocations); the model and the clustering move to the multi-GPU box. Three scripts, three engines, one consensus output.</p>
 
       <div class="pipeline" style="margin-top:18px;grid-template-columns:repeat(3,1fr);">
         <div class="step spark"><span class="ix">stage 1 · spark cluster</span><span class="label">build_sequences.py</span></div>
-        <div class="step driver"><span class="ix">stage 2 · 4&times;H200 GPU</span><span class="label">train_encode.py</span></div>
-        <div class="step spark"><span class="ix">stage 3 · 1&times;H200 GPU</span><span class="label">cluster_confirm.py</span></div>
+        <div class="step driver"><span class="ix">stage 2 · multi-GPU</span><span class="label">train_encode.py</span></div>
+        <div class="step spark"><span class="ix">stage 3 · single GPU</span><span class="label">cluster_confirm.py</span></div>
       </div>
 
       <div class="method-row" style="margin-top:24px;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start;">
@@ -511,7 +511,7 @@
           <div style="font-family:var(--font-head);font-weight:900;font-size:12px;letter-spacing:2px;color:var(--accent);">STAGE 2 &middot; PYTORCH</div>
           <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);margin-top:6px;">denoising GRU AE</div>
           <div style="font-size:12.5px;margin-top:8px;line-height:1.55;">
-            2-layer GRU encoder &rarr; 256-d hidden state &rarr; 2-layer GRU decoder reconstructs the <em>clean</em> sequence from a <em>corrupted</em> input. Per-plate embedding is the encoder's final hidden state. Trained DDP across 4 H200s; bf16 autocast + bucket batching (32 buckets) + decoder TBPTT (chunk 256) for stability on the 3,202-token tail.
+            2-layer GRU encoder &rarr; 256-d hidden state &rarr; 2-layer GRU decoder reconstructs the <em>clean</em> sequence from a <em>corrupted</em> input. Per-plate embedding is the encoder's final hidden state. Trained DDP across multiple GPUs; bf16 autocast + bucket batching (32 buckets) + decoder TBPTT (chunk 256) for stability on the 3,202-token tail.
           </div>
           <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-dim);margin-top:8px;line-height:1.55;">
             output: <strong class="accent">3,830,566 &times; 256</strong> embeddings<br>
