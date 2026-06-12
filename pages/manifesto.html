@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Convoy · Manifesto</title>
+  <link rel="stylesheet" href="css/nav.css" />
+  <link rel="stylesheet" href="css/final.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <style>
+    /* ───────── Poster overrides — single viewport, no scroll ───────── */
+    html, body { overflow: hidden; }
+    body[data-theme="neon"] { padding-top: 0; cursor: default; }
+
+    .poster {
+      position: fixed;
+      top: 64px;            /* leave space for fixed top-nav */
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 12px 18px 14px;
+      display: grid;
+      grid-template-rows: 1fr 0.42fr;   /* upper 70%, lower 30% */
+      gap: 10px;
+      z-index: 1;
+    }
+    .upper {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      min-height: 0;
+    }
+    .col {
+      display: grid;
+      gap: 8px;
+      min-height: 0;
+    }
+    .col-fpg { grid-template-rows: auto 1fr 1fr 1fr; }
+    .col-mxg, .col-emb { grid-template-rows: 1fr 1fr 1fr; }
+
+    .tile {
+      position: relative;
+      background: linear-gradient(160deg,
+        color-mix(in srgb, var(--bg-panel) 92%, transparent),
+        color-mix(in srgb, var(--bg) 88%, transparent));
+      border: 1px solid var(--rule-strong);
+      padding: 9px 12px 10px;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .tile::before {
+      content: "";
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      box-shadow: var(--glow-accent);
+    }
+    .tile.fpg::before { background: var(--c-magenta); box-shadow: var(--glow-accent); }
+    .tile.mxg::before { background: var(--c-cyan);    box-shadow: var(--glow-jade); }
+    .tile.emb::before { background: var(--c-mint);    box-shadow: var(--glow-spark); }
+    .tile.dat::before { background: var(--c-amber);   box-shadow: var(--glow-amber); }
+    .tile.con::before { background: var(--c-violet);  box-shadow: 0 0 8px var(--c-violet); }
+
+    .tile-hdr {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .tile-title {
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+    }
+    .tile-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--ink-dim);
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+
+    /* Method column header (gets glow / accent color) */
+    .col-head {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 4px;
+    }
+    .col-head .badge {
+      font-family: var(--font-head);
+      font-size: 9px;
+      letter-spacing: 2px;
+      padding: 3px 8px;
+      border: 1px solid;
+    }
+    .col-head h2 {
+      font-family: var(--font-head);
+      font-size: 16px;
+      letter-spacing: 1.5px;
+      font-weight: 900;
+    }
+
+    /* Math / formula box */
+    .formula {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--bg-deep) 60%, transparent);
+      border: 1px dashed var(--rule);
+      padding: 6px 9px;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .formula .var { color: var(--c-amber); font-style: italic; }
+    .formula .op  { color: var(--c-cyan); }
+    .formula .note { color: var(--ink-dim); font-size: 10px; font-style: italic; }
+
+    .desc {
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--ink);
+      margin-top: 6px;
+    }
+    .desc strong { color: var(--ink); }
+
+    /* Steps list */
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .steps li {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 10.5px;
+      line-height: 1.4;
+    }
+    .steps li::before {
+      content: counter(stp);
+      counter-increment: stp;
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 10px;
+      color: var(--accent);
+      text-align: center;
+    }
+    .steps.fpg-c li::before { color: var(--c-magenta); }
+    .steps.mxg-c li::before { color: var(--c-cyan); }
+    .steps.emb-c li::before { color: var(--c-mint); }
+    .steps { counter-reset: stp; }
+
+    .params {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 6px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+    }
+    .params .p {
+      padding: 2px 6px;
+      border: 1px solid var(--rule-strong);
+      color: var(--ink-dim);
+    }
+    .params .p .k { color: var(--ink); }
+
+    /* Results metrics */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      margin-top: 4px;
+    }
+    .metric {
+      border: 1px solid var(--rule);
+      padding: 4px 6px;
+    }
+    .metric .v {
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 14px;
+      line-height: 1.05;
+    }
+    .metric .k {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--ink-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    /* Data overview tile gets a small inline funnel chart */
+    .funnel {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .funnel .nums {
+      display: grid;
+      gap: 3px;
+    }
+    .funnel .num {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.0;
+    }
+    .funnel .num small {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      color: var(--ink-dim);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      display: block;
+      font-weight: 400;
+    }
+
+    /* Lower section */
+    .lower {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 10px;
+      min-height: 0;
+    }
+    .lower .tile { padding: 9px 14px 10px; }
+    .lower table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 4px;
+      font-size: 10.5px;
+    }
+    .lower th, .lower td {
+      padding: 3px 5px;
+      border-bottom: 1px solid var(--rule);
+      text-align: left;
+      vertical-align: top;
+    }
+    .lower th {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--ink-dim);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      font-weight: 400;
+      border-bottom: 1px solid var(--rule-strong);
+    }
+    .lower td.win { color: var(--c-mint); font-weight: 700; }
+    .lower td.mid { color: var(--c-amber); }
+    .lower td.lose { color: var(--ink-dim); }
+
+    .tier-list {
+      display: grid;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .tier {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 8px;
+      align-items: baseline;
+      border-left: 2px solid;
+      padding: 3px 0 3px 8px;
+    }
+    .tier .lvl {
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: 1.6px;
+    }
+    .tier .txt {
+      font-size: 10.5px;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    .tier.gold   { border-color: var(--c-mint); } .tier.gold   .lvl { color: var(--c-mint); }
+    .tier.silver { border-color: var(--c-cyan); } .tier.silver .lvl { color: var(--c-cyan); }
+    .tier.cand   { border-color: var(--c-amber); } .tier.cand   .lvl { color: var(--c-amber); }
+
+    .closing {
+      margin-top: 7px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--rule);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      line-height: 1.5;
+      color: var(--ink);
+      font-style: italic;
+    }
+    .closing strong { color: var(--c-mint); font-style: normal; }
+
+    /* Inline-sparkline svg */
+    .spark-svg { display: block; }
+
+    /* Reduce nav-dots opacity since they're not relevant here */
+    .nav-dots { display: none; }
+  </style>
+</head>
+<body data-theme="neon" data-prev="final.html" data-next="index.html">
+
+<div class="scanline-neon"></div>
+
+<nav class="top-nav" aria-label="Project sections">
+  <a class="tab"        data-target="dark"   href="index.html">
+    <span class="zh">Inizio</span><span class="en">Beginning</span>
+  </a>
+  <a class="tab"        data-target="bright" href="sviluppo.html">
+    <span class="zh">Sviluppo</span><span class="en">Development</span>
+  </a>
+  <a class="tab"        data-target="bright" href="climax.html">
+    <span class="zh">Climax</span><span class="en">Climax</span>
+  </a>
+  <a class="tab"        data-target="neon"   href="final.html">
+    <span class="zh">Conclusione</span><span class="en">Conclusion</span>
+  </a>
+  <a class="tab active" data-target="neon"   href="manifesto.html">
+    <span class="zh">Manifesto</span><span class="en">Poster</span>
+  </a>
+</nav>
+
+<div class="poster">
+
+  <!-- ════════════════════ UPPER 70% ════════════════════ -->
+  <div class="upper">
+
+    <!-- ===== Column 1 : FPGrowth (with Data Overview on top) ===== -->
+    <div class="col col-fpg">
+
+      <!-- Data Overview tile (top-left, takes ~ 18% of col height) -->
+      <div class="tile dat">
+        <div class="tile-hdr">
+          <span class="tile-title amber">Data &middot; 31 days</span>
+          <span class="tile-sub">raw &rarr; signal</span>
+        </div>
+        <div class="funnel">
+          <div class="nums">
+            <div class="num amber">275.9 M<small>raw sightings</small></div>
+            <div class="num cyan" style="font-size:11px;">22 M <small>distinct plates</small></div>
+            <div class="num mint" style="font-size:11px;">977 / 31<small>cameras / days</small></div>
+          </div>
+          <svg class="spark-svg" width="78" height="48" viewBox="0 0 78 48" role="img" aria-label="Data funnel">
+            <defs>
+              <linearGradient id="fnl" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffaa00" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#00ffaa" stop-opacity="0.9"/>
+              </linearGradient>
+            </defs>
+            <polygon points="2,4 76,4 60,42 18,42" fill="url(#fnl)" opacity="0.55" stroke="#ffaa00" stroke-width="0.8"/>
+            <text x="39" y="14" text-anchor="middle" font-family="Orbitron" font-size="7" fill="#fff">275M</text>
+            <text x="39" y="26" text-anchor="middle" font-family="Orbitron" font-size="6.5" fill="#fff">22M</text>
+            <text x="39" y="37" text-anchor="middle" font-family="Orbitron" font-size="6.5" fill="#fff">3.83M</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- FPGrowth column header -->
+      <div class="tile fpg">
+        <div class="tile-hdr">
+          <span class="tile-title magenta">Method 1 &middot; FP-Growth</span>
+          <span class="tile-sub">cells &middot; buckets</span>
+        </div>
+        <div class="formula">
+          support(<span class="var">I</span>) = |{ <span class="var">T</span> &isin; <span class="var">D</span> : <span class="var">I</span> &sube; <span class="var">T</span> }| &nbsp;<span class="op">&ge;</span>&nbsp; min_count<br>
+          <span class="note">T = transaction = set of plates in one (camera, &epsilon;-window) cell</span>
+        </div>
+        <div class="desc">Find <strong>plate-sets</strong> that co-occur in &ge; <em>N</em> camera&times;time buckets. Direct co-occurrence, undirected.</div>
+      </div>
+
+      <!-- FPGrowth steps -->
+      <div class="tile fpg">
+        <div class="tile-hdr">
+          <span class="tile-title magenta">Pipeline</span>
+          <span class="tile-sub">Spark MLlib</span>
+        </div>
+        <ol class="steps fpg-c">
+          <li>Bucketize: <code>(camera, &lfloor;t/&epsilon;&rfloor;)</code> &middot; dual-offset</li>
+          <li>Transactionize: <code>collect_set(plate)</code> per cell</li>
+          <li>Density-cap: drop buckets &gt; 2k plates</li>
+          <li>FP-Growth fit with <code>min_count</code></li>
+          <li>Emit <code>(plates, k, count)</code> rows</li>
+        </ol>
+        <div class="params">
+          <span class="p"><span class="k">&epsilon;</span>=300s</span>
+          <span class="p"><span class="k">min_count</span>=50</span>
+          <span class="p"><span class="k">density_cap</span>=2000</span>
+          <span class="p"><span class="k">-Xss</span>=16m</span>
+        </div>
+      </div>
+
+      <!-- FPGrowth results -->
+      <div class="tile fpg">
+        <div class="tile-hdr">
+          <span class="tile-title magenta">Outcome</span>
+          <span class="tile-sub">~4h38m wall</span>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="v magenta">5,447</div><div class="k">convoys</div></div>
+          <div class="metric"><div class="v magenta">783</div><div class="k">distinct plates</div></div>
+          <div class="metric"><div class="v">628&times;</div><div class="k">top pair, 31d</div></div>
+          <div class="metric"><div class="v">6</div><div class="k">permanent convoy</div></div>
+        </div>
+        <div class="desc" style="font-size:10px;margin-top:5px;">Best at <strong class="magenta">small specific groups</strong>; C(N,k) blowup on large fleets.</div>
+      </div>
+
+    </div>
+
+    <!-- ===== Column 2 : MaxGrowth ===== -->
+    <div class="col col-mxg">
+
+      <div class="tile mxg">
+        <div class="tile-hdr">
+          <span class="tile-title cyan">Method 2 &middot; MaxGrowth</span>
+          <span class="tile-sub">routes &middot; VLDB '24</span>
+        </div>
+        <div class="formula">
+          &langle;<span class="var">O</span>, <span class="var">P</span>&rangle; &nbsp; s.t. &nbsp; &forall;<span class="var">p</span>&isin;<span class="var">O</span>:&nbsp; <span class="var">p</span> visits every <span class="var">c</span>&isin;<span class="var">P</span> in order,<br>
+          &nbsp;&nbsp;&epsilon;-co-arrival at each, gaps <span class="op">&le;</span> <span class="var">d</span>, |<span class="var">O</span>|<span class="op">&ge;</span><span class="var">m</span>, |<span class="var">P</span>|<span class="op">&ge;</span><span class="var">k</span><br>
+          <span class="note">Output only the maximal &langle;O,P&rangle; — no dominator exists</span>
+        </div>
+        <div class="desc">Find <strong>directed routes</strong> that a group of plates co-traversed. Stronger evidence; route is the proof.</div>
+      </div>
+
+      <div class="tile mxg">
+        <div class="tile-hdr">
+          <span class="tile-title cyan">Pipeline</span>
+          <span class="tile-sub">Spark + driver recursion</span>
+        </div>
+        <ol class="steps mxg-c">
+          <li>Plate prefilter: Apriori (&ge; <code>min_visits</code>, &ge; <code>min_obs</code>)</li>
+          <li>Build per-plate trajectories + position index</li>
+          <li>Materialize &epsilon;-clusters per camera (dual offset)</li>
+          <li>Broadcast &rarr; parallel <code>grow_from_root</code></li>
+          <li>Inverted-index maximality filter</li>
+        </ol>
+        <div class="params">
+          <span class="p"><span class="k">m</span>=2</span>
+          <span class="p"><span class="k">k</span>=3</span>
+          <span class="p"><span class="k">d</span>=1</span>
+          <span class="p"><span class="k">&epsilon;</span>=300s</span>
+          <span class="p"><span class="k">min_obs</span>=200</span>
+          <span class="p"><span class="k">max_plates</span>=100k</span>
+          <span class="p"><span class="k">max_cluster</span>=50</span>
+        </div>
+      </div>
+
+      <div class="tile mxg">
+        <div class="tile-hdr">
+          <span class="tile-title cyan">Outcome</span>
+          <span class="tile-sub">~30 min wall</span>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="v cyan">223,184</div><div class="k">max platoons</div></div>
+          <div class="metric"><div class="v cyan">87,047</div><div class="k">distinct plates</div></div>
+          <div class="metric"><div class="v">20</div><div class="k">largest platoon</div></div>
+          <div class="metric"><div class="v">9</div><div class="k">longest route</div></div>
+        </div>
+        <div class="desc" style="font-size:10px;margin-top:5px;">Top corridor <code>434&rarr;404&rarr;238</code> traversed by <strong class="cyan">5,324</strong> distinct platoons.</div>
+      </div>
+
+    </div>
+
+    <!-- ===== Column 3 : Embedding ===== -->
+    <div class="col col-emb">
+
+      <div class="tile emb">
+        <div class="tile-hdr">
+          <span class="tile-title mint">Method 3 &middot; Embedding</span>
+          <span class="tile-sub">t2vec + HDBSCAN</span>
+        </div>
+        <div class="formula">
+          <span class="var">h</span> = GRU<sub>enc</sub>(corrupt(<span class="var">x</span>)) &nbsp;&middot;&nbsp; loss = CE(<span class="var">x</span>, GRU<sub>dec</sub>(<span class="var">h</span>))<br>
+          <span class="var">e</span><sub>plate</sub> = <span class="var">h</span><sub>final</sub> &isin; &Ropf;<sup>256</sup>; &nbsp; cluster + &epsilon;-confirm<br>
+          <span class="note">Trained as denoising AE — route shape, not co-occurrence</span>
+        </div>
+        <div class="desc">Embed each plate's <strong>route-shape</strong> as a 256-d vector; cluster vectors; confirm via raw &epsilon;-window co-occurrence.</div>
+      </div>
+
+      <div class="tile emb">
+        <div class="tile-hdr">
+          <span class="tile-title mint">Pipeline</span>
+          <span class="tile-sub">Spark &rarr; PyTorch &rarr; cuML</span>
+        </div>
+        <ol class="steps emb-c">
+          <li>Build per-plate sequences (Spark)</li>
+          <li>Train GRU AE: bf16 + bucket batching + TBPTT</li>
+          <li>Encode all plates &rarr; 3.83 M &times; 256 vectors</li>
+          <li>cuML HDBSCAN clusters L2-normalized vectors</li>
+          <li>Confirm via co-occurrence in raw CSV</li>
+        </ol>
+        <div class="params">
+          <span class="p"><span class="k">hidden</span>=256</span>
+          <span class="p"><span class="k">epochs</span>=10</span>
+          <span class="p"><span class="k">batch</span>=128/rank</span>
+          <span class="p"><span class="k">drop</span>=0.3</span>
+          <span class="p"><span class="k">buckets</span>=32</span>
+          <span class="p"><span class="k">tbptt</span>=256</span>
+          <span class="p"><span class="k">min_cooccur</span>=3</span>
+        </div>
+      </div>
+
+      <div class="tile emb">
+        <div class="tile-hdr">
+          <span class="tile-title mint">Outcome</span>
+          <span class="tile-sub">loss 2.84 &rarr; 2.18</span>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="v mint">4,041</div><div class="k">confirmed fleets</div></div>
+          <div class="metric"><div class="v mint">102,779</div><div class="k">plates in fleets</div></div>
+          <div class="metric"><div class="v">759</div><div class="k">largest fleet</div></div>
+          <div class="metric"><div class="v">35.3</div><div class="k">pairs/plate (500+)</div></div>
+        </div>
+        <div class="desc" style="font-size:10px;margin-top:5px;">Density grows with size: small=loose (0.7) &rarr; large=<strong class="mint">tight</strong> (35.3) — real organised operations.</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ════════════════════ LOWER 30% ════════════════════ -->
+  <div class="lower">
+
+    <!-- ===== Cross Analysis (2 tables) ===== -->
+    <div class="tile con">
+      <div class="tile-hdr">
+        <span class="tile-title violet">Cross Analysis</span>
+        <span class="tile-sub">coverage matrix &middot; method strengths</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>ground-truth signal</th><th class="magenta">FP-Growth</th><th class="cyan">MaxGrowth</th><th class="mint">Embedding</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>top pair (628&times;)</td><td class="win">&check; direct</td><td class="win">&check; in platoons</td><td class="mid">&deg; lumped (208)</td></tr>
+          <tr><td>4-plate always-together</td><td class="win">&check; k=4 row</td><td class="win">&check; &langle;4, k&rangle;</td><td class="lose">&minus; noise</td></tr>
+          <tr><td>6-car permanent convoy</td><td class="win">&check; k=6 row</td><td class="win">&check; &langle;6, k&rangle;</td><td class="lose">&minus; noise</td></tr>
+          <tr><td>20-plate fixed-route platoon</td><td class="mid">&deg; C(20,k) buried</td><td class="win">&check; &langle;20, 3&rangle;</td><td class="win">&check; 21-50 bucket</td></tr>
+          <tr><td>759-plate operation</td><td class="lose">&minus; C(759,k) &asymp; 30k rows</td><td class="lose">&minus; fragmented</td><td class="win">&check; one fleet</td></tr>
+          <tr><td>195 large fleets (&gt;50)</td><td class="lose">&minus; combinatorial</td><td class="lose">&minus; fragmented</td><td class="win">&check; 195 clean</td></tr>
+        </tbody>
+      </table>
+
+      <table style="margin-top:6px;">
+        <thead>
+          <tr><th>method</th><th>uniquely good at</th><th>cannot see</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="magenta">FP-Growth</td><td>small specific convoys (&le;10)</td><td>large fleets (combinatorial blowup)</td></tr>
+          <tr><td class="cyan">MaxGrowth</td><td>directional persistent groups on fixed routes</td><td>route-statistical large operations</td></tr>
+          <tr><td class="mint">Embedding</td><td>large statistical fleets (50&ndash;759)</td><td>small specific permanent convoys</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== Final Conclusion ===== -->
+    <div class="tile con">
+      <div class="tile-hdr">
+        <span class="tile-title violet">Conclusion &middot; one city, three lenses</span>
+        <span class="tile-sub">tiered consensus registry</span>
+      </div>
+
+      <div class="desc" style="margin-top:0;font-size:11px;">
+        No single primitive sees this city. The three methods triangulate &mdash; their <em>agreement</em> is the high-confidence signal, their <em>gaps</em> are intrinsic blindnesses, not bugs.
+      </div>
+
+      <div class="tier-list">
+        <div class="tier gold">
+          <span class="lvl">TIER 1<br><small style="font-size:9px;letter-spacing:1.2px;color:var(--c-mint);">GOLD</small></span>
+          <span class="txt"><strong style="color:var(--c-mint);">triple-witnessed.</strong> Present in FP-Growth output <span style="color:var(--c-amber);">AND</span> covered by a MaxGrowth platoon <span style="color:var(--c-amber);">AND</span> inside a confirmed embedding cluster. Highest precision &mdash; the operational core.</span>
+        </div>
+        <div class="tier silver">
+          <span class="lvl">TIER 2<br><small style="font-size:9px;letter-spacing:1.2px;color:var(--c-cyan);">SILVER</small></span>
+          <span class="txt"><strong style="color:var(--c-cyan);">double-witnessed.</strong> Two-of-three agreement: large embedding fleets (MaxGrowth-fragmented but real) and small FP-Growth convoys (embedding-missed but real).</span>
+        </div>
+        <div class="tier cand">
+          <span class="lvl">TIER 3<br><small style="font-size:9px;letter-spacing:1.2px;color:var(--c-amber);">CAND.</small></span>
+          <span class="txt"><strong style="color:var(--c-amber);">single-method.</strong> Investigative leads only; manual triage &amp; parameter-sensitivity studies.</span>
+        </div>
+      </div>
+
+      <div class="closing">
+        The shadow convoy was never one shadow. It was the union of three shadows cast by three different lights &mdash; <strong>and the city only shows what's at the intersection.</strong>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // Single-poster page: ←/→ navigate cross-section per data-prev / data-next.
+  (() => {
+    const prev = document.body.dataset.prev;
+    const next = document.body.dataset.next;
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft'  && prev) { e.preventDefault(); window.location.href = prev; }
+      if (e.key === 'ArrowRight' && next) { e.preventDefault(); window.location.href = next; }
+    });
+  })();
+</script>
+
+</body>
+</html>
