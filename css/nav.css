@@ -1,0 +1,156 @@
+/* ═══════════════════════════════════════════════════════════
+   SHADOW CONVOY — Cross-page navigator
+   Three themes co-defined; tabs animate from current theme's
+   palette to the destination's palette on hover.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Three theme signatures. The two-color pair (accent + spark) is
+     what the gradient hover-bar sweeps between. */
+  --theme-dark-bg:        #0a0a0f;
+  --theme-dark-accent:    #00f5ff;
+  --theme-dark-spark:     #ff00ff;
+
+  --theme-bright-bg:      #f7f5ed;
+  --theme-bright-accent:  #0050ff;
+  --theme-bright-spark:   #ff0080;
+
+  --theme-neon-bg:        #0d0117;
+  --theme-neon-accent:    #ff00aa;
+  --theme-neon-spark:     #00ffaa;
+}
+
+/* ── current theme exports its colors to two well-known vars
+      so the nav (and any other shared component) can read them. */
+[data-theme="dark"]   { --here-accent: var(--theme-dark-accent);   --here-spark: var(--theme-dark-spark); }
+[data-theme="bright"] { --here-accent: var(--theme-bright-accent); --here-spark: var(--theme-bright-spark); }
+[data-theme="neon"]   { --here-accent: var(--theme-neon-accent);   --here-spark: var(--theme-neon-spark); }
+
+
+/* ═══════════════════════════════════════════════════════════
+   Top navigator
+   ═══════════════════════════════════════════════════════════ */
+.top-nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 64px;
+  z-index: 1000;
+  display: flex;
+  font-family: 'Orbitron', monospace;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--bg, #0a0a0f) 72%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--here-accent) 30%, transparent);
+}
+
+.top-nav .tab {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--text, #b0b8d0);
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
+  transition: color 420ms cubic-bezier(.4,0,.2,1),
+              text-shadow 420ms ease;
+}
+
+/* The tab's two-line label: large CJK + small Latin */
+.top-nav .tab .zh {
+  font-family: 'Orbitron', 'Noto Sans CJK SC', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 4px;
+  line-height: 1;
+}
+.top-nav .tab .en {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+/* Each tab carries the colors of its *destination* theme. Hover shows
+   that theme — independent of the page you're currently on. */
+.top-nav .tab[data-target="dark"]   { --tab-a: var(--theme-dark-accent);   --tab-b: var(--theme-dark-spark); }
+.top-nav .tab[data-target="bright"] { --tab-a: var(--theme-bright-accent); --tab-b: var(--theme-bright-spark); }
+.top-nav .tab[data-target="neon"]   { --tab-a: var(--theme-neon-accent);   --tab-b: var(--theme-neon-spark); }
+
+/* The wipe layer — a left-to-right two-stop gradient in the
+   destination theme's accent + spark. */
+.top-nav .tab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--tab-a) 22%, transparent) 0%,
+    color-mix(in srgb, var(--tab-b) 30%, transparent) 100%);
+  transform: translateX(-100%);
+  transition: transform 600ms cubic-bezier(.4,0,.2,1);
+  z-index: -1;
+}
+
+/* The blooming underline — pure destination-theme gradient. */
+.top-nav .tab::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--tab-a) 25%,
+    var(--tab-b) 75%,
+    transparent 100%);
+  opacity: 0;
+  transform: scaleX(.3);
+  transform-origin: 50% 100%;
+  transition: opacity 380ms ease,
+              transform 600ms cubic-bezier(.4,0,.2,1);
+}
+
+/* Hover ── wipe in, underline blooms, text adopts destination color */
+.top-nav .tab:not(.active):hover {
+  color: var(--tab-b);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--tab-a) 70%, transparent);
+}
+.top-nav .tab:not(.active):hover .zh { letter-spacing: 6px; }
+.top-nav .tab:not(.active):hover .en { opacity: 1; }
+.top-nav .tab:not(.active):hover::before { transform: translateX(0); }
+.top-nav .tab:not(.active):hover::after  { opacity: 1; transform: scaleX(1); }
+
+/* Active tab ── current page; tiny dot signature, no hover wipe */
+.top-nav .tab.active {
+  color: var(--here-accent);
+  cursor: default;
+}
+.top-nav .tab.active::after {
+  opacity: 1;
+  transform: scaleX(.45);
+  background: var(--here-accent);
+  box-shadow: 0 0 16px var(--here-accent);
+}
+
+/* Active-tab signature mark left of the label */
+.top-nav .tab.active::before {
+  content: "";
+  inset: auto auto auto 0;
+  height: 6px; width: 6px;
+  margin-left: 14px;
+  border-radius: 50%;
+  background: var(--here-accent);
+  box-shadow: 0 0 10px var(--here-accent);
+  transform: none;
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+}
+
+
+/* nudge the page content down past the fixed nav (only for pages that
+   use natural scroll; snap-scroll pages don't need this). */
+body.has-top-nav { padding-top: 64px; }

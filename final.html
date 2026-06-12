@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Convoy · Conclusione</title>
+  <link rel="stylesheet" href="css/nav.css" />
+  <link rel="stylesheet" href="css/final.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+</head>
+<body data-theme="neon" data-prev="climax.html" data-next="manifesto.html">
+
+<div class="scanline-neon"></div>
+<div id="scroll-progress"></div>
+
+<nav class="top-nav" aria-label="Project sections">
+  <a class="tab"        data-target="dark"   href="index.html">
+    <span class="zh">Inizio</span><span class="en">Beginning</span>
+  </a>
+  <a class="tab"        data-target="bright" href="sviluppo.html">
+    <span class="zh">Sviluppo</span><span class="en">Development</span>
+  </a>
+  <a class="tab"        data-target="bright" href="climax.html">
+    <span class="zh">Climax</span><span class="en">Climax</span>
+  </a>
+  <a class="tab active" data-target="neon"   href="final.html">
+    <span class="zh">Conclusione</span><span class="en">Conclusion</span>
+  </a>
+  <a class="tab"        data-target="neon"   href="manifesto.html">
+    <span class="zh">Manifesto</span><span class="en">Poster</span>
+  </a>
+</nav>
+
+<nav class="nav-dots" aria-label="Slide navigation">
+  <button class="nav-dot active" data-section="hero"       data-label="HERO"></button>
+  <button class="nav-dot"        data-section="methods"    data-label="THREE METHODS"></button>
+  <button class="nav-dot"        data-section="cross"      data-label="CROSS ANALYSIS"></button>
+  <button class="nav-dot"        data-section="downstream" data-label="DOWNSTREAM"></button>
+  <button class="nav-dot"        data-section="close"      data-label="CONCLUSION"></button>
+</nav>
+
+<div id="page-wrapper">
+
+  <!-- ═════ 0 — HERO ═════ -->
+  <section class="section" id="hero">
+    <div class="section-inner" style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+      <p class="kicker" style="text-align:center;">Conclusione · the three reads converge</p>
+      <h1 class="section-title" style="font-size:clamp(56px, 9vw, 130px);line-height:1.0;margin:8px 0 28px;">
+        <span class="title-sweep">Three Lenses</span><br>
+        <span class="title-sweep" style="font-size:0.55em;">One City of Convoys</span>
+      </h1>
+      <p class="lede" style="font-size:16px;text-align:center;max-width:780px;margin:0 auto 36px;">
+        275.9 M ANPR records. <strong class="magenta">FP-Growth</strong> read it cell by cell. <strong class="cyan">MaxGrowth</strong> read it route by route. <strong class="mint">Embeddings</strong> read it vector by vector. Each method saw something the others couldn't. This section reconciles them.
+      </p>
+
+      <div style="display:flex;gap:36px;flex-wrap:wrap;justify-content:center;max-width:880px;">
+        <div class="panel" style="min-width:200px;padding:18px 22px;">
+          <div style="font-family:var(--font-head);font-weight:900;font-size:22px;" class="magenta">FP-GROWTH</div>
+          <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--ink-dim);margin-top:6px;">cells &middot; buckets</div>
+          <div style="font-family:var(--font-mono);font-size:13px;color:var(--ink);margin-top:10px;">5,447 convoys<br>783 plates</div>
+        </div>
+        <div class="panel" style="min-width:200px;padding:18px 22px;">
+          <div style="font-family:var(--font-head);font-weight:900;font-size:22px;" class="cyan">MAXGROWTH</div>
+          <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--ink-dim);margin-top:6px;">routes &middot; co-traversal</div>
+          <div style="font-family:var(--font-mono);font-size:13px;color:var(--ink);margin-top:10px;">223,184 platoons<br>87,047 plates</div>
+        </div>
+        <div class="panel" style="min-width:200px;padding:18px 22px;">
+          <div style="font-family:var(--font-head);font-weight:900;font-size:22px;" class="mint">EMBEDDING</div>
+          <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--ink-dim);margin-top:6px;">vectors &middot; route shape</div>
+          <div style="font-family:var(--font-mono);font-size:13px;color:var(--ink);margin-top:10px;">4,041 fleets<br>102,779 plates</div>
+        </div>
+      </div>
+
+      <div class="scroll-hint" style="margin-top:36px;"><span>continue</span><div class="scroll-arrow"></div></div>
+    </div>
+  </section>
+
+  <!-- ═════ 1 — THREE METHODS COMPARED ═════ -->
+  <section class="section" id="methods">
+    <div class="section-inner">
+      <p class="kicker">01 / Three methods on one dataset</p>
+      <h2 class="section-title" style="font-size:clamp(36px, 5vw, 60px);">
+        Same data, <span class="title-sweep">three primitives</span>
+      </h2>
+
+      <table class="failure-table" style="margin-top:16px;">
+        <thead>
+          <tr><th>dimension</th><th class="magenta">FP-Growth</th><th class="cyan">MaxGrowth</th><th class="mint">Embedding</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>primitive</strong></td>
+            <td>(camera × 5-min) cell</td>
+            <td>ordered camera route</td>
+            <td>256-d trajectory vector</td>
+          </tr>
+          <tr>
+            <td><strong>signal</strong></td>
+            <td>shared bucket count</td>
+            <td>directed co-traversal of ≥3 cameras</td>
+            <td>cosine similarity + co-occur confirm</td>
+          </tr>
+          <tr>
+            <td><strong>output</strong></td>
+            <td>5,447 convoys</td>
+            <td>223,184 maximal platoons</td>
+            <td>4,041 confirmed fleets</td>
+          </tr>
+          <tr>
+            <td><strong>plates surfaced</strong></td>
+            <td>783</td>
+            <td>87,047</td>
+            <td class="fix">102,779</td>
+          </tr>
+          <tr>
+            <td><strong>strength</strong></td>
+            <td class="fix">small permanent convoys</td>
+            <td class="fix">directional persistent groups</td>
+            <td class="fix">large corporate / taxi fleets</td>
+          </tr>
+          <tr>
+            <td><strong>weakness</strong></td>
+            <td>C(N,k) combinatorial blowup on large fleets</td>
+            <td>route-statistical groups fragment</td>
+            <td>small specific convoys go noise</td>
+          </tr>
+          <tr>
+            <td><strong>engine</strong></td>
+            <td>Spark MLlib FP-Growth</td>
+            <td>Spark + driver-side MaxGrowth recursion</td>
+            <td>Spark ETL → multi-GPU PyTorch → cuML HDBSCAN</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="forward-grid" style="margin-top:20px;">
+        <div class="forward">
+          <h3 class="magenta">Cells: precise, narrow</h3>
+          <p>FP-Growth's bucketed-set abstraction has the highest <em>precision</em> on small convoys. Its tradeoff is recall on anything larger than a handful of plates — the support-set explosion drowns the real signal in combinatorial noise.</p>
+        </div>
+        <div class="forward">
+          <h3 class="cyan">Routes: directional, defensible</h3>
+          <p>MaxGrowth turns "shared a moment" into "co-traversed a path", which is much harder to fake by coincidence. Each pattern carries a directed proof. The ε + d parameters absorb OCR/occlusion gaps the cell view can't.</p>
+        </div>
+        <div class="forward">
+          <h3 class="mint">Vectors: shape, breadth</h3>
+          <p>The embedding moves from <em>where you were when</em> to <em>what your month-long route shape was</em>. That captures large operations whose vehicles never simultaneously co-locate but share a routing personality — invisible to the other two.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 2 — CROSS ANALYSIS ═════ -->
+  <section class="section" id="cross">
+    <div class="section-inner">
+      <p class="kicker">02 / Cross-validation across methods</p>
+      <h2 class="section-title" style="font-size:clamp(36px, 5vw, 60px);">
+        What each <span class="title-sweep">missed</span>, what each <span class="title-sweep">found alone</span>
+      </h2>
+
+      <p class="lede" style="font-size:14px;">FP-Growth identified a handful of high-confidence small convoys we hold as <em>ground truth</em>. Checking the other two methods against them surfaces the methodological asymmetry.</p>
+
+      <table class="failure-table" style="margin-top:14px;">
+        <thead>
+          <tr><th>ground-truth finding</th><th class="cyan">MaxGrowth</th><th class="mint">Embedding</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>top FP-Growth pair</strong> <code>(477634, 491688)</code> — 628× in 31 days</td>
+            <td class="fix">surfaces as 1-of-N platoons across multiple routes</td>
+            <td class="fix">both in cluster 11727 (208 plates) — pulled together but diluted</td>
+          </tr>
+          <tr>
+            <td><strong>4-plate always-together set</strong></td>
+            <td class="fix">visible as a tight ⟨4, k⟩ maximal pattern</td>
+            <td>all noise (−1) — six near-clones in a sparse density pocket</td>
+          </tr>
+          <tr>
+            <td><strong>6-car permanent convoy</strong> (~1,548 days)</td>
+            <td class="fix">visible as a single ⟨6, k⟩ pattern across the convoy's spine route</td>
+            <td>all noise (−1) — same density failure as above</td>
+          </tr>
+          <tr>
+            <td><strong>cluster 11981</strong> — 759-plate operation, 55.8 pairs/plate</td>
+            <td>~30,000+ fragmented platoons (C(759,k) blowup)</td>
+            <td class="fix">one clean 759-plate confirmed fleet</td>
+          </tr>
+          <tr>
+            <td><strong>195 large fleets</strong> (size 50–759, confirmed dense)</td>
+            <td>combinatorial fragmentation across each</td>
+            <td class="fix">195 clean entries</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="forward-grid" style="margin-top:20px;grid-template-columns:1fr 1fr;">
+        <div class="forward">
+          <h3 class="cyan">The complementarity, formally</h3>
+          <p>FP-Growth and MaxGrowth share a primitive (physical co-occurrence in space-time) and differ on shape (set vs. sequence). The embedding's primitive is entirely different (route similarity), and its co-occurrence confirmation step is what keeps it grounded.</p>
+          <p>The Venn diagram is real, not rhetorical: each method's recall has a non-empty difference set, and the unions cover ground no single method covers alone.</p>
+        </div>
+        <div class="forward">
+          <h3 class="mint">What "confirmed across methods" means</h3>
+          <p>A convoy that appears in <strong class="magenta">FP-Growth output</strong>, <strong class="cyan">MaxGrowth output</strong>, AND a <strong class="mint">confirmed embedding cluster</strong> is a triply-corroborated finding — three independent algorithmic witnesses to the same physical truth. These are the entries that survive the strongest possible filter.</p>
+          <p>Conversely, single-method outputs are <em>candidates</em>, not conclusions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 3 — DOWNSTREAM ANALYSIS ═════ -->
+  <section class="section" id="downstream">
+    <div class="section-inner">
+      <p class="kicker">03 / Downstream · consensus fleet registry</p>
+      <h2 class="section-title" style="font-size:clamp(36px, 5vw, 60px);">
+        The <span class="title-sweep">registry</span>, three-tiered
+      </h2>
+
+      <p class="lede" style="font-size:14.5px;">The natural downstream artifact is not "the union of all three outputs" — that's just noise plus noise plus noise. It's a <strong>tiered registry</strong> where confidence is gradient: triple-witnessed at the top, single-method candidates below.</p>
+
+      <div class="pipeline-neon" style="margin-top:18px;">
+        <div class="pipe-step">
+          <span class="ix">tier 1 · gold</span>
+          <span class="label" style="color:var(--c-mint);">triple-witnessed fleets</span>
+          <span class="note">in FP-Growth ∩ MaxGrowth ∩ Embedding-confirmed. Highest precision; the operational core.</span>
+        </div>
+        <div class="pipe-step">
+          <span class="ix">tier 2 · silver</span>
+          <span class="label" style="color:var(--c-cyan);">double-witnessed fleets</span>
+          <span class="note">two-of-three agreement. Includes large embedding fleets (MaxGrowth-fragmented but real) and small FP-Growth convoys (embedding-missed but real).</span>
+        </div>
+        <div class="pipe-step">
+          <span class="ix">tier 3 · candidate</span>
+          <span class="label" style="color:var(--c-amber);">single-method candidates</span>
+          <span class="note">surfaced by one method only. Investigative leads, not conclusions. Best for manual triage and parameter-sensitivity studies.</span>
+        </div>
+      </div>
+
+      <div class="forward-grid" style="margin-top:22px;grid-template-columns:1fr 1fr;">
+        <div class="forward">
+          <h3 class="magenta">Applications the registry unlocks</h3>
+          <p><strong>Fleet identification.</strong> The 759-plate cluster 11981 is a real delivery / courier / ride-share operation. Pair the plate list with vehicle-class metadata to identify the operator.</p>
+          <p><strong>Anomaly detection.</strong> A vehicle that consistently <em>joins</em> a known fleet's trajectory pattern but isn't a registered member — surfaceable by re-encoding new sightings and matching to confirmed fleet centroids.</p>
+          <p><strong>Saturation mapping.</strong> Cross-reference confirmed-fleet trajectories with camera coverage; corridors where multiple gold-tier fleets share a route are critical infrastructure.</p>
+        </div>
+        <div class="forward">
+          <h3 class="cyan">What we deliberately don't do</h3>
+          <p><strong>No individual identification.</strong> The pipeline operates on plate IDs as opaque tokens. No name, no registration lookup, no vehicle-owner inference. The registry is about <em>group dynamics</em>, not individual surveillance.</p>
+          <p><strong>No predictive scoring.</strong> "X plate is likely a member of Y fleet" claims need legal review we haven't done. The registry catalogues observed patterns; it doesn't extrapolate to future behaviour.</p>
+          <p><strong>No real-time deployment.</strong> Batch analysis over a closed 31-day window only. Streaming variants (Flink 2025) are documented possible work, not delivered work.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:18px;padding:14px 22px;border-left:3px solid var(--c-amber);">
+        <div style="font-family:var(--font-head);font-weight:900;font-size:11px;letter-spacing:2px;color:var(--c-amber);">CALIBRATION NOTE</div>
+        <div style="font-size:13px;color:var(--ink);margin-top:6px;line-height:1.6;">Tier thresholds (3-window co-occurrence, ε=300s, max-cluster-size=50, etc.) are chosen by sensitivity sweeps documented in <code>doc/MaxGrowth.md</code> and <code>doc/Embeddings.md</code>. Different downstream uses warrant different thresholds; the pipelines are parameterised, not opinionated.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 4 — CONCLUSION ═════ -->
+  <section class="section" id="close">
+    <div class="section-inner">
+      <p class="kicker">04 / What the data taught us</p>
+      <h2 class="section-title" style="font-size:clamp(36px, 5vw, 60px);">
+        <span class="title-sweep">No single lens</span> sees this city
+      </h2>
+
+      <p class="lede" style="font-size:15px;max-width:920px;">The most important thing we built isn't any one method's output. It's the methodological discipline of <strong>cross-witnessing</strong>: every claim about who travels with whom is only as strong as the number of <em>independently-derived</em> evidence streams that support it.</p>
+
+      <div class="forward-grid" style="margin-top:20px;grid-template-columns:1fr 1fr 1fr;gap:18px;">
+        <div class="forward">
+          <h3 class="magenta">On methods</h3>
+          <p>Three algorithms with three different primitives, each with a different failure mode, on the same dataset, produce three views with measurable overlap and measurable gaps. The gaps are not bugs — they're <em>what each method is intrinsically blind to</em>.</p>
+        </div>
+        <div class="forward">
+          <h3 class="cyan">On data</h3>
+          <p>275.9 M records yield 783 (FP-Growth) to 102,779 (embedding) "interesting" plates depending on the lens. The interesting plates are not a fixed property of the data — they're a property of <em>the question you ask</em>.</p>
+        </div>
+        <div class="forward">
+          <h3 class="mint">On honesty</h3>
+          <p>Every method here has documented failure modes (NaN trains, NCCL crashes, OOMs, OCR ghosts, false-positive routes). The pipeline doesn't pretend they didn't happen — <code>.changelog</code> records each, and the doc/ tree calibrates the parameters that mitigate them.</p>
+        </div>
+      </div>
+
+      <div class="failure-table" style="margin-top:22px;">
+        <table style="width:100%;">
+          <thead>
+            <tr><th>question</th><th>best primitive</th><th>output</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Who's in a specific small convoy?</td><td class="magenta">FP-Growth cells</td><td class="fix">small set with direct evidence</td></tr>
+            <tr><td>Who co-traverses a specific corridor?</td><td class="cyan">MaxGrowth routes</td><td class="fix">directed ⟨O,P⟩ pattern</td></tr>
+            <tr><td>Whose month-long route-shape rhymes with whose?</td><td class="mint">Embedding vectors</td><td class="fix">confirmed large fleet</td></tr>
+            <tr><td>Which findings are simultaneously true across primitives?</td><td>all three (tiered registry)</td><td class="fix">gold-tier triple-witnessed fleets</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="lede" style="margin-top:24px;font-size:15px;text-align:center;max-width:900px;margin-left:auto;margin-right:auto;">
+        <span class="title-sweep" style="font-size:1.2em;">The shadow convoy was never one shadow.</span><br>
+        It was the union of three shadows cast by three different lights — and the city only shows what's at the intersection.
+      </p>
+
+      <div style="margin-top:36px;text-align:center;">
+        <span style="display:inline-block;padding:14px 26px;border:1px solid color-mix(in srgb, var(--c-mint) 50%, transparent);font-family:var(--font-mono);font-size:12px;letter-spacing:3px;color:var(--c-mint);text-transform:uppercase;text-shadow:var(--glow-spark);">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c-mint);box-shadow:var(--glow-spark);margin-right:10px;vertical-align:middle;animation:fin-pulse 1.8s ease-in-out infinite;"></span>
+          FINE &middot; THE END &middot; 完
+        </span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<style>
+  @keyframes fin-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.4; transform: scale(0.7); }
+  }
+</style>
+
+<script src="js/in-process.js"></script>
+</body>
+</html>

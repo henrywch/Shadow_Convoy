@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Convoy · Manifesto</title>
+  <link rel="stylesheet" href="css/nav.css" />
+  <link rel="stylesheet" href="css/final.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <style>
+    /* ───── poster overrides — single viewport, no scroll ───── */
+    html, body { overflow: hidden; }
+    body[data-theme="neon"] { padding-top: 0; cursor: default; }
+
+    /* Auto-hide nav — overlays not pushes. 14-px sentinel reveals on hover. */
+    .top-nav {
+      transform: translateY(-100%);
+      transition: transform 320ms cubic-bezier(.4, 0, .2, 1);
+      z-index: 100;
+    }
+    .nav-sentinel {
+      position: fixed; top: 0; left: 0; right: 0; height: 14px; z-index: 99;
+      background: linear-gradient(to bottom,
+        color-mix(in srgb, var(--c-magenta) 32%, transparent), transparent);
+      pointer-events: auto;
+    }
+    .nav-sentinel:hover ~ .top-nav, .top-nav:hover { transform: translateY(0); }
+    .nav-sentinel::after {
+      content: ""; position: absolute; left: 50%; top: 4px;
+      width: 56px; height: 2px; transform: translateX(-50%);
+      background: var(--c-magenta); opacity: 0.7; box-shadow: var(--glow-accent);
+      animation: hint 2.4s ease-in-out infinite;
+    }
+    @keyframes hint {
+      0%, 100% { opacity: 0.25; width: 36px; }
+      50%      { opacity: 0.85; width: 84px; }
+    }
+
+    .poster {
+      position: fixed; inset: 0; padding: 22px 24px 22px;
+      display: grid;
+      grid-template-rows: 1fr 0.46fr;
+      gap: 14px;
+      z-index: 1;
+    }
+    .upper { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; min-height: 0; }
+    .col   { display: grid; gap: 10px; min-height: 0; }
+    .col-fpg { grid-template-rows: 1.45fr 2.0fr 2.6fr 2.95fr; }
+    .col-mxg { grid-template-rows: 2.0fr 2.6fr 2.95fr; }
+    .col-emb { grid-template-rows: 2.0fr 2.6fr 2.95fr; }
+
+    /* ─── Tile + hover-popover-overlay system ─── */
+    .tile {
+      position: relative;
+      background: linear-gradient(160deg,
+        color-mix(in srgb, var(--bg-panel) 94%, transparent),
+        color-mix(in srgb, var(--bg) 88%, transparent));
+      border: 1px solid var(--rule-strong);
+      padding: 13px 16px 13px;
+      overflow: visible;                   /* allow popover to escape */
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      transition: box-shadow 240ms ease,
+                  border-color 240ms ease,
+                  z-index 0s linear 260ms;
+      outline: none;
+    }
+    .tile-clip {
+      overflow: hidden;                    /* core content clips inside tile */
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-height: 0;
+      flex: 1;
+    }
+    .tile.has-more { cursor: pointer; }
+    .tile.has-more::after {
+      content: "+";
+      position: absolute;
+      top: 8px; right: 12px;
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--c-amber);
+      opacity: 0.55;
+      transition: transform 240ms ease, opacity 240ms ease;
+      pointer-events: none;
+    }
+    .tile.has-more:hover::after,
+    .tile.has-more:focus-within::after {
+      transform: rotate(45deg);
+      opacity: 1;
+    }
+    .tile:hover, .tile:focus-within {
+      z-index: 60;
+      transition: box-shadow 240ms ease, border-color 240ms ease, z-index 0s linear 0s;
+      box-shadow: 0 14px 38px rgba(0,0,0,0.55), 0 0 0 1px var(--rule-strong) inset;
+      border-color: color-mix(in srgb, var(--c-amber) 50%, var(--rule-strong));
+    }
+    .tile::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; z-index: 2;
+    }
+    .tile.fpg::before { background: var(--c-magenta); box-shadow: var(--glow-accent); }
+    .tile.mxg::before { background: var(--c-cyan);    box-shadow: var(--glow-jade); }
+    .tile.emb::before { background: var(--c-mint);    box-shadow: var(--glow-spark); }
+    .tile.dat::before { background: var(--c-amber);   box-shadow: var(--glow-amber); }
+    .tile.con::before { background: var(--c-violet);  box-shadow: 0 0 8px var(--c-violet); }
+
+    /* Popover: drops down under the tile as overlay. */
+    .more {
+      position: absolute;
+      left: -1px; right: -1px;
+      top: calc(100% + 4px);
+      background: linear-gradient(160deg,
+        color-mix(in srgb, var(--bg-panel) 98%, transparent),
+        color-mix(in srgb, var(--bg-deep) 94%, transparent));
+      border: 1px solid var(--rule-strong);
+      border-top: 2px solid var(--c-amber);
+      box-shadow: 0 18px 44px rgba(0,0,0,0.66);
+      padding: 0 16px;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 320ms cubic-bezier(.4,0,.2,1),
+                  opacity 220ms ease,
+                  padding 280ms ease;
+      pointer-events: none;
+      z-index: 65;
+    }
+    .tile:hover .more, .tile:focus-within .more {
+      max-height: 320px;
+      opacity: 1;
+      padding: 12px 16px 14px;
+      pointer-events: auto;
+    }
+    .more-hdr {
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 9.5px;
+      letter-spacing: 2.2px;
+      color: var(--c-amber);
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    .more .desc, .more .note { font-size: 11.5px; line-height: 1.55; color: var(--ink); }
+    .more .note { color: var(--ink-dim); font-style: italic; margin-top: 5px; }
+    .more ul { list-style: none; padding: 0; margin: 4px 0 0 0; display: grid; gap: 4px; }
+    .more ul li {
+      font-size: 11.5px; line-height: 1.45;
+      padding-left: 14px; position: relative;
+      color: var(--ink);
+    }
+    .more ul li::before {
+      content: "›";
+      position: absolute; left: 0; top: 0;
+      color: var(--c-amber);
+      font-weight: 900;
+    }
+    .more strong { color: var(--ink); }
+
+    /* ─── Tile header ─── */
+    .tile-hdr {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+      flex-shrink: 0;
+    }
+    .tile-title {
+      font-family: var(--font-head); font-weight: 900; font-size: 12.5px;
+      letter-spacing: 2.4px; text-transform: uppercase; line-height: 1;
+    }
+    .tile-sub {
+      font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-dim);
+      letter-spacing: 1.4px; text-transform: uppercase;
+      margin-right: 22px;            /* leave space for the +/× icon */
+    }
+
+    /* ─── Math / formula ─── */
+    .formula {
+      font-family: var(--font-mono); font-size: 12px; color: var(--ink);
+      background: color-mix(in srgb, var(--bg-deep) 60%, transparent);
+      border: 1px dashed var(--rule);
+      padding: 8px 11px; line-height: 1.65; letter-spacing: 0.2px;
+      flex-shrink: 0;
+    }
+    .formula .var  { color: var(--c-amber); font-style: italic; }
+    .formula .op   { color: var(--c-cyan); }
+
+    .desc      { font-size: 12px; line-height: 1.55; color: var(--ink); }
+    .desc.dim  { color: var(--ink-dim); font-size: 11px; }
+
+    /* ─── Pipeline / params ─── */
+    .pipe { width: 100%; height: auto; max-height: 120px; flex-shrink: 0; }
+    .params {
+      display: flex; flex-wrap: wrap; gap: 5px 7px;
+      font-family: var(--font-mono); font-size: 10.5px;
+      margin-top: auto; flex-shrink: 0;
+    }
+    .params .p { padding: 2.5px 7px; border: 1px solid var(--rule-strong); color: var(--ink-dim); }
+    .params .p .k { color: var(--ink); }
+
+    /* ─── Outcome stats + chart ─── */
+    .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
+    .bigstat { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
+    .bigstat .v {
+      font-family: var(--font-head); font-weight: 900; font-size: 26px; line-height: 1.0;
+    }
+    .bigstat .k {
+      font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim);
+      letter-spacing: 1.3px; text-transform: uppercase;
+    }
+    .chart { width: 100%; flex: 1; min-height: 0; }
+    .chart-cap {
+      font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-dim);
+      line-height: 1.45; flex-shrink: 0;
+    }
+
+    /* ─── Data overview ─── */
+    .data-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; align-items: center; }
+    .data-stats .v { font-family: var(--font-head); font-weight: 900; font-size: 22px; line-height: 1.0; }
+    .data-stats .v small {
+      display: block; font-family: var(--font-mono); font-size: 9px; color: var(--ink-dim);
+      letter-spacing: 1.4px; text-transform: uppercase; font-weight: 400; margin-top: 3px;
+    }
+
+    /* ─── Lower section ─── */
+    .lower { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; min-height: 0; }
+    .lower .tile {
+      padding: 14px 18px 14px;
+      /* Lower tiles have no popover overlay, so it is safe to clip + scroll. */
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--c-amber) 60%, transparent) transparent;
+      scrollbar-gutter: stable;
+      /* Border replaces the absolutely-positioned ::before bar so the
+         coloured left edge stays pinned while inner content scrolls. */
+      border-left-width: 3px;
+      border-left-style: solid;
+    }
+    .lower .tile.con { border-left-color: var(--c-violet); }
+    /* Suppress the upper-tile ::before stripe in the lower section. */
+    .lower .tile::before { display: none; }
+    /* WebKit/Blink scrollbar styling — matches the neon palette. */
+    .lower .tile::-webkit-scrollbar { width: 6px; }
+    .lower .tile::-webkit-scrollbar-track { background: transparent; }
+    .lower .tile::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--c-amber) 55%, transparent);
+      border-radius: 3px;
+    }
+    .lower .tile::-webkit-scrollbar-thumb:hover {
+      background: color-mix(in srgb, var(--c-amber) 85%, transparent);
+    }
+
+    .matrix { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .matrix th, .matrix td { padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+    .matrix th {
+      font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-dim);
+      letter-spacing: 1.3px; text-transform: uppercase; font-weight: 400;
+      border-bottom: 1px solid var(--rule-strong); text-align: left;
+    }
+    .matrix th.c, .matrix td.c { text-align: center; }
+    .matrix td.lbl { color: var(--ink); }
+    .matrix td .yes { color: var(--c-mint); font-weight: 800; font-size: 14px; }
+    .matrix td .par { color: var(--c-amber); font-weight: 800; font-size: 14px; }
+    .matrix td .no  { color: var(--ink-dim); font-size: 14px; }
+
+    .tier-list { display: grid; gap: 8px; margin-top: 6px; }
+    .tier {
+      display: grid; grid-template-columns: 78px 1fr; gap: 12px; align-items: start;
+      border-left: 3px solid; padding: 5px 0 5px 12px;
+    }
+    .tier .lvl { font-family: var(--font-head); font-weight: 900; font-size: 13px; letter-spacing: 1.8px; line-height: 1.05; }
+    .tier .lvl small { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: 1.4px; margin-top: 4px; }
+    .tier .txt { font-size: 11.5px; line-height: 1.5; color: var(--ink); }
+    .tier.gold   { border-color: var(--c-mint); } .tier.gold   .lvl { color: var(--c-mint); }
+    .tier.silver { border-color: var(--c-cyan); } .tier.silver .lvl { color: var(--c-cyan); }
+    .tier.cand   { border-color: var(--c-amber); } .tier.cand   .lvl { color: var(--c-amber); }
+
+    .closing {
+      margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--rule);
+      font-family: var(--font-mono); font-size: 11.5px; line-height: 1.55;
+      color: var(--ink); font-style: italic;
+    }
+    .closing strong { color: var(--c-mint); font-style: normal; }
+
+    .nav-dots { display: none; }
+
+    /* Hint glow on the +/× icon, so users notice it on first load */
+    @keyframes plusPulse {
+      0%, 100% { opacity: 0.45; }
+      50%      { opacity: 0.95; }
+    }
+    .tile.has-more::after { animation: plusPulse 3.4s ease-in-out infinite; }
+
+    /* Make focused tiles accessible via keyboard */
+    .tile.has-more:focus-visible {
+      outline: 2px solid var(--c-amber);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body data-theme="neon" data-prev="final.html" data-next="index.html">
+
+<div class="scanline-neon"></div>
+
+<!-- Sentinel: hover here to reveal nav -->
+<div class="nav-sentinel" aria-hidden="true"></div>
+
+<nav class="top-nav" aria-label="Project sections">
+  <a class="tab"        data-target="dark"   href="index.html">
+    <span class="zh">Inizio</span><span class="en">Beginning</span>
+  </a>
+  <a class="tab"        data-target="bright" href="sviluppo.html">
+    <span class="zh">Sviluppo</span><span class="en">Development</span>
+  </a>
+  <a class="tab"        data-target="bright" href="climax.html">
+    <span class="zh">Climax</span><span class="en">Climax</span>
+  </a>
+  <a class="tab"        data-target="neon"   href="final.html">
+    <span class="zh">Conclusione</span><span class="en">Conclusion</span>
+  </a>
+  <a class="tab active" data-target="neon"   href="manifesto.html">
+    <span class="zh">Manifesto</span><span class="en">Poster</span>
+  </a>
+</nav>
+
+<div class="poster">
+
+  <!-- ═══════════════ UPPER — three method columns ═══════════════ -->
+  <div class="upper">
+
+    <!-- ════════ Column 1 : FP-Growth (with Data Overview on top) ════════ -->
+    <div class="col col-fpg">
+
+      <!-- Data overview -->
+      <div class="tile dat has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title amber">Data &middot; 31 days</span>
+            <span class="tile-sub">scope</span>
+          </div>
+          <div class="data-stats">
+            <div class="v amber">275.9 M<small>raw sightings</small></div>
+            <div class="v cyan">22 M<small>distinct plates</small></div>
+            <div class="v mint">977<small>cameras</small></div>
+            <div class="v" style="color:var(--c-violet);">31 d<small>span</small></div>
+          </div>
+        </div>
+        <div class="more" role="region" aria-label="Dataset details">
+          <div class="more-hdr">Dataset detail</div>
+          <ul>
+            <li>275.9 M rows of <code>(plate, location, timestamp)</code> &mdash; one ANPR event per row.</li>
+            <li>22 M distinct plates ever seen; only <strong>0.0036 %</strong> end up in any FP-Growth convoy.</li>
+            <li>977 active cameras, 24/7 coverage, 31 contiguous days.</li>
+            <li>Three independent detectors run on the same CSV; their outputs are the rest of this poster.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FP-Growth Math -->
+      <div class="tile fpg has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title magenta">FP-Growth</span>
+            <span class="tile-sub">cells &middot; itemset mining</span>
+          </div>
+          <div class="formula">
+            support(<span class="var">I</span>) = #cells&nbsp;containing&nbsp;<span class="var">I</span> &nbsp;<span class="op">&ge;</span>&nbsp; min_count
+          </div>
+          <div class="desc">Plate-sets co-occurring in many <strong>(camera, time-bucket)</strong> cells. Undirected, direct evidence.</div>
+        </div>
+        <div class="more" role="region" aria-label="FP-Growth details">
+          <div class="more-hdr">Method detail</div>
+          <ul>
+            <li><strong>Cell</strong> = one camera &times; one &epsilon;-window. <strong>Itemset</strong> = the plates that landed in it.</li>
+            <li>Spark MLlib FP-Growth at <code>min_count=50</code> over dual-offset bucketisation.</li>
+            <li>Strength: high-precision small permanent convoys. Weakness: C(N, k) blowup on large fleets.</li>
+            <li>Two dual-offset grids (offset 0 and &epsilon;/2) absorb plates whose visits straddle a bucket boundary.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FP-Growth Pipeline -->
+      <div class="tile fpg has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title magenta">Pipeline</span>
+            <span class="tile-sub">Spark MLlib</span>
+          </div>
+          <svg class="pipe" viewBox="0 0 460 96" preserveAspectRatio="xMidYMid meet" role="img" aria-label="FP-Growth pipeline">
+            <defs>
+              <marker id="arr-m" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L6,4 L0,8 Z" fill="#ff00aa" opacity="0.7"/>
+              </marker>
+            </defs>
+            <g font-family="JetBrains Mono" font-size="9.5">
+              <rect x="6"   y="20" width="92" height="40" fill="none" stroke="#ff00aa" stroke-width="1.1"/>
+              <text x="52"  y="36" text-anchor="middle" fill="#f0e6ff">bucketize</text>
+              <text x="52"  y="50" text-anchor="middle" fill="#9d8dc7" font-size="8.5">cam &times; t/&epsilon;</text>
+              <line x1="100" y1="40" x2="118" y2="40" stroke="#ff00aa" stroke-width="1.2" marker-end="url(#arr-m)"/>
+              <rect x="120" y="20" width="92" height="40" fill="none" stroke="#ff00aa" stroke-width="1.1"/>
+              <text x="166" y="36" text-anchor="middle" fill="#f0e6ff">collect_set</text>
+              <text x="166" y="50" text-anchor="middle" fill="#9d8dc7" font-size="8.5">per cell</text>
+              <line x1="214" y1="40" x2="232" y2="40" stroke="#ff00aa" stroke-width="1.2" marker-end="url(#arr-m)"/>
+              <rect x="234" y="20" width="92" height="40" fill="none" stroke="#ff00aa" stroke-width="1.1"/>
+              <text x="280" y="36" text-anchor="middle" fill="#f0e6ff">density-cap</text>
+              <text x="280" y="50" text-anchor="middle" fill="#9d8dc7" font-size="8.5">drop &gt; 2k</text>
+              <line x1="328" y1="40" x2="346" y2="40" stroke="#ff00aa" stroke-width="1.2" marker-end="url(#arr-m)"/>
+              <rect x="348" y="14" width="106" height="52" fill="#ff00aa" fill-opacity="0.12" stroke="#ff00aa" stroke-width="1.4"/>
+              <text x="401" y="32" text-anchor="middle" fill="#ff00aa" font-weight="700">FP-Growth</text>
+              <text x="401" y="46" text-anchor="middle" fill="#f0e6ff" font-size="8.5">min_count = 50</text>
+              <text x="401" y="58" text-anchor="middle" fill="#9d8dc7" font-size="8.5">&rarr; convoys</text>
+            </g>
+          </svg>
+          <div class="params">
+            <span class="p"><span class="k">&epsilon;</span>=300s</span>
+            <span class="p"><span class="k">min_count</span>=50</span>
+            <span class="p"><span class="k">cap</span>=2000</span>
+          </div>
+        </div>
+        <div class="more" role="region" aria-label="FP-Growth pipeline details">
+          <div class="more-hdr">Engineering notes</div>
+          <ul>
+            <li><strong>density_cap=2000</strong>: caps freak buckets (one camera once had 23,595 plates &mdash; stuck reader); largest legitimate bucket is 1,718.</li>
+            <li><strong>-Xss=16m</strong> on executor JVM &mdash; FP-tree path serialisation needs &gt; default 1 MB stack.</li>
+            <li>No <code>df.persist()</code>: a single scan is faster than caching 13 GiB cluster-wide.</li>
+            <li>Output schema: <code>(plates, k, count)</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FP-Growth Outcome -->
+      <div class="tile fpg has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title magenta">Outcome</span>
+            <span class="tile-sub">~4 h 38 min</span>
+          </div>
+          <div class="stat-row">
+            <div class="bigstat"><div class="v magenta">5,447</div><div class="k">Convoys</div></div>
+            <div class="bigstat"><div class="v magenta">783</div><div class="k">Plates</div></div>
+          </div>
+          <svg class="chart" viewBox="0 0 280 60" preserveAspectRatio="xMidYMid meet" role="img" aria-label="783 plates out of 22 M as sparse waffle">
+            <defs>
+              <pattern id="dotgrid" width="14" height="14" patternUnits="userSpaceOnUse">
+                <circle cx="7" cy="7" r="1.8" fill="#9d8dc7" opacity="0.35"/>
+              </pattern>
+            </defs>
+            <rect x="0" y="4" width="280" height="44" fill="url(#dotgrid)"/>
+            <circle cx="7"  cy="11" r="2.6" fill="#ff00aa">
+              <animate attributeName="r" values="2.6;3.6;2.6" dur="2.2s" repeatCount="indefinite"/>
+            </circle>
+            <text x="140" y="58" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#9d8dc7">
+              783 / 22 M &asymp; 0.0036 % of vehicles ever convoy
+            </text>
+          </svg>
+          <div class="chart-cap">Top pair <strong style="color:var(--c-magenta);">628&times;</strong> in 31 d.</div>
+        </div>
+        <div class="more" role="region" aria-label="FP-Growth top findings">
+          <div class="more-hdr">Headline findings</div>
+          <ul>
+            <li><strong>Top single pair</strong> <code>(477634, 491688)</code> &mdash; co-located 628&times; in 31 days (~20&times;/day). Likely a service-vehicle pair.</li>
+            <li><strong>4-plate always-together</strong> set <code>{3271142, 16972992, 16970573, 511670}</code> &mdash; appears in exactly 1,548 convoys each.</li>
+            <li><strong>6-car permanent convoy</strong> &mdash; same 4 plus <code>{18150551, 3542309}</code>. The single strongest signal in the dataset.</li>
+            <li>0.0036 % convoy rate validates the prefilter: most plates are NOT in any organised group.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════ Column 2 : MaxGrowth ════════════════ -->
+    <div class="col col-mxg">
+
+      <!-- MaxGrowth Math -->
+      <div class="tile mxg has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title cyan">MaxGrowth</span>
+            <span class="tile-sub">routes &middot; VLDB '24</span>
+          </div>
+          <div class="formula">
+            &langle;<span class="var">O</span>, <span class="var">P</span>&rangle; &middot; &forall;<span class="var">p</span>&isin;<span class="var">O</span>: <span class="var">p</span> visits every <span class="var">c</span>&isin;<span class="var">P</span> in order
+          </div>
+          <div class="desc"><strong>Directed routes</strong> co-traversed by a group of plates. The route is the proof.</div>
+        </div>
+        <div class="more" role="region" aria-label="MaxGrowth method details">
+          <div class="more-hdr">Method detail</div>
+          <ul>
+            <li>&epsilon;-co-arrival at each route stop, max <strong>d</strong> intermediate cameras skipped per member, |O|&ge;m and |P|&ge;k.</li>
+            <li><strong>Maximal</strong>: emit only the longest /widest pattern &mdash; not dominated by any &langle;O', P'&rangle; with O&sube;O' and P a d-subseq of P'.</li>
+            <li>Reference: Bei et al., <em>"Mining Platoon Patterns from Traffic Videos"</em>, VLDB 2024.</li>
+            <li>The directed-route requirement makes MaxGrowth far harder to fake than co-occurrence buckets.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- MaxGrowth Pipeline -->
+      <div class="tile mxg has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title cyan">Pipeline</span>
+            <span class="tile-sub">Spark + driver recursion</span>
+          </div>
+          <svg class="pipe" viewBox="0 0 460 96" preserveAspectRatio="xMidYMid meet" role="img" aria-label="MaxGrowth pipeline">
+            <defs>
+              <marker id="arr-c" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L6,4 L0,8 Z" fill="#00aaff" opacity="0.8"/>
+              </marker>
+            </defs>
+            <g font-family="JetBrains Mono" font-size="9.5">
+              <rect x="6"   y="20" width="82" height="40" fill="none" stroke="#00aaff" stroke-width="1.1"/>
+              <text x="47"  y="36" text-anchor="middle" fill="#f0e6ff">prefilter</text>
+              <text x="47"  y="50" text-anchor="middle" fill="#9d8dc7" font-size="8.5">Apriori</text>
+              <line x1="90" y1="40" x2="106" y2="40" stroke="#00aaff" stroke-width="1.2" marker-end="url(#arr-c)"/>
+              <rect x="108" y="20" width="82" height="40" fill="none" stroke="#00aaff" stroke-width="1.1"/>
+              <text x="149" y="36" text-anchor="middle" fill="#f0e6ff">trajec-</text>
+              <text x="149" y="48" text-anchor="middle" fill="#f0e6ff">tories</text>
+              <line x1="192" y1="40" x2="208" y2="40" stroke="#00aaff" stroke-width="1.2" marker-end="url(#arr-c)"/>
+              <rect x="210" y="20" width="82" height="40" fill="none" stroke="#00aaff" stroke-width="1.1"/>
+              <text x="251" y="36" text-anchor="middle" fill="#f0e6ff">&epsilon;-clusters</text>
+              <text x="251" y="50" text-anchor="middle" fill="#9d8dc7" font-size="8.5">per camera</text>
+              <line x1="294" y1="40" x2="310" y2="40" stroke="#00aaff" stroke-width="1.2" marker-end="url(#arr-c)"/>
+              <rect x="312" y="14" width="92" height="52" fill="#00aaff" fill-opacity="0.12" stroke="#00aaff" stroke-width="1.4"/>
+              <text x="358" y="32" text-anchor="middle" fill="#00aaff" font-weight="700">grow</text>
+              <text x="358" y="46" text-anchor="middle" fill="#f0e6ff" font-size="8.5">parallel</text>
+              <text x="358" y="58" text-anchor="middle" fill="#9d8dc7" font-size="8.5">recursion</text>
+              <line x1="404" y1="40" x2="420" y2="40" stroke="#00aaff" stroke-width="1.2" marker-end="url(#arr-c)"/>
+              <rect x="420" y="20" width="38" height="40" fill="none" stroke="#00aaff" stroke-width="1.1"/>
+              <text x="439" y="36" text-anchor="middle" fill="#f0e6ff" font-size="9">max</text>
+              <text x="439" y="50" text-anchor="middle" fill="#9d8dc7" font-size="8">filter</text>
+            </g>
+          </svg>
+          <div class="params">
+            <span class="p"><span class="k">m</span>=2</span>
+            <span class="p"><span class="k">k</span>=3</span>
+            <span class="p"><span class="k">d</span>=1</span>
+            <span class="p"><span class="k">&epsilon;</span>=300s</span>
+            <span class="p"><span class="k">min_obs</span>=200</span>
+            <span class="p"><span class="k">max_cluster</span>=50</span>
+          </div>
+        </div>
+        <div class="more" role="region" aria-label="MaxGrowth pipeline details">
+          <div class="more-hdr">Engineering notes</div>
+          <ul>
+            <li><strong>Local maximality pruning</strong> inside <code>grow_from_root</code> &mdash; skip emission when any extension preserves full membership. ~10-100&times; less raw output.</li>
+            <li><strong>Inverted-index dominance filter</strong> &mdash; candidates restricted to patterns containing every member of B, seeded on B's rarest plate. Turns 19 h naive scan into seconds.</li>
+            <li>Broadcast envelope: trajectories + position index + clusters-by-camera, &lt; 1 GiB after prefilter.</li>
+            <li>Failure modes hit + fixed: master-node OOM (memory rebalance), cluster-count blowup (max_cluster cap), Java stack overflow in Kryo (`-Xss=16m`).</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- MaxGrowth Outcome -->
+      <div class="tile mxg has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title cyan">Outcome</span>
+            <span class="tile-sub">~30 min wall</span>
+          </div>
+          <div class="stat-row">
+            <div class="bigstat"><div class="v cyan">223,184</div><div class="k">Maximal Platoons</div></div>
+            <div class="bigstat"><div class="v cyan">87,047</div><div class="k">Plates</div></div>
+          </div>
+          <svg class="chart" viewBox="0 0 280 96" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Top platoon corridors by platoon count">
+            <g font-family="JetBrains Mono" font-size="9">
+              <text x="0" y="9" fill="#9d8dc7" font-size="8">top corridors &middot; platoons co-traversing each</text>
+              <g transform="translate(0,16)">
+                <text x="0" y="8" fill="#9d8dc7">434&rarr;404&rarr;238</text>
+                <rect x="100" y="2" width="160.0" height="8" fill="#00aaff" opacity="0.92"/>
+                <text x="266" y="8" fill="#f0e6ff">5,324</text>
+              </g>
+              <g transform="translate(0,28)">
+                <text x="0" y="8" fill="#9d8dc7">68&rarr;181&rarr;45</text>
+                <rect x="100" y="2" width="128.5" height="8" fill="#00aaff" opacity="0.82"/>
+                <text x="234" y="8" fill="#f0e6ff">4,274</text>
+              </g>
+              <g transform="translate(0,40)">
+                <text x="0" y="8" fill="#9d8dc7">391&rarr;375&rarr;372</text>
+                <rect x="100" y="2" width="105.3" height="8" fill="#00aaff" opacity="0.74"/>
+                <text x="211" y="8" fill="#f0e6ff">3,501</text>
+              </g>
+              <g transform="translate(0,52)">
+                <text x="0" y="8" fill="#9d8dc7">268&rarr;478&rarr;481</text>
+                <rect x="100" y="2" width="95.8" height="8" fill="#00aaff" opacity="0.66"/>
+                <text x="201" y="8" fill="#f0e6ff">3,184</text>
+              </g>
+              <g transform="translate(0,64)">
+                <text x="0" y="8" fill="#9d8dc7">11&rarr;227&rarr;557</text>
+                <rect x="100" y="2" width="80.5" height="8" fill="#00aaff" opacity="0.58"/>
+                <text x="186" y="8" fill="#f0e6ff">2,677</text>
+              </g>
+              <g transform="translate(0,76)">
+                <text x="0" y="8" fill="#9d8dc7">297&rarr;278&rarr;437</text>
+                <rect x="100" y="2" width="60.3" height="8" fill="#00aaff" opacity="0.50"/>
+                <text x="165" y="8" fill="#f0e6ff">2,005</text>
+              </g>
+            </g>
+          </svg>
+          <div class="chart-cap">Largest platoon: <strong style="color:var(--c-cyan);">20 plates</strong>.</div>
+        </div>
+        <div class="more" role="region" aria-label="MaxGrowth headline findings">
+          <div class="more-hdr">Headline findings</div>
+          <ul>
+            <li><strong>Largest platoon</strong>: 20 plates on route <code>11 &rarr; 227 &rarr; 557</code>.</li>
+            <li><strong>Longest route</strong>: 9 cameras co-traversed by a 2-plate pair &mdash; unambiguous shared journey.</li>
+            <li><strong>Hub cameras</strong> <code>434, 404, 238, 68, 478</code> carry 24,000+ routes each &mdash; the city's convoy backbone.</li>
+            <li><strong>Super-connector</strong> plate <code>490759</code> appears in 172 distinct platoons &mdash; likely transit / commercial.</li>
+            <li>71 % of platoons are pairs; the 6-20-plate tail is the persistent-fleet signal.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════ Column 3 : Embedding ════════════════ -->
+    <div class="col col-emb">
+
+      <!-- Embedding Math -->
+      <div class="tile emb has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title mint">Embedding</span>
+            <span class="tile-sub">t2vec + HDBSCAN</span>
+          </div>
+          <div class="formula">
+            <span class="var">h</span> = GRU<sub>enc</sub>( corrupt(<span class="var">x</span>) ) &nbsp;&middot;&nbsp; <span class="var">e</span><sub>plate</sub> = <span class="var">h</span><sub>final</sub> &isin; &Ropf;<sup>256</sup>
+          </div>
+          <div class="desc"><strong>Route-shape vectors</strong>. Plates with similar month-long routes cluster; co-occurrence confirms.</div>
+        </div>
+        <div class="more" role="region" aria-label="Embedding method details">
+          <div class="more-hdr">Method detail</div>
+          <ul>
+            <li>Denoising seq-to-seq AE (t2vec, Li et al. ICDE 2018) repurposed for ANPR camera trajectories.</li>
+            <li>Encoder corrupts input (30 % token drop), decoder reconstructs the clean route &mdash; buys occlusion / OCR robustness.</li>
+            <li><strong>Confirmation step</strong> (rare in trajectory clustering) re-reads the raw CSV and keeps only clusters whose members actually co-occur in &epsilon;-windows.</li>
+            <li>Without confirmation, two commuters driving the same road every morning would look identical to a real convoy.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Embedding Pipeline -->
+      <div class="tile emb has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title mint">Pipeline</span>
+            <span class="tile-sub">Spark &rarr; PyTorch &rarr; cuML</span>
+          </div>
+          <svg class="pipe" viewBox="0 0 460 96" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Embedding pipeline">
+            <defs>
+              <marker id="arr-mt" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L6,4 L0,8 Z" fill="#00ffaa" opacity="0.85"/>
+              </marker>
+            </defs>
+            <g font-family="JetBrains Mono" font-size="9.5">
+              <rect x="6"   y="14" width="100" height="52" fill="none" stroke="#00ffaa" stroke-width="1.2"/>
+              <text x="56"  y="32" text-anchor="middle" fill="#f0e6ff" font-weight="700">sequences</text>
+              <text x="56"  y="46" text-anchor="middle" fill="#9d8dc7" font-size="8.5">3.83 M plates</text>
+              <text x="56"  y="58" text-anchor="middle" fill="#9d8dc7" font-size="8.5">(cam, t) per</text>
+              <line x1="108" y1="40" x2="126" y2="40" stroke="#00ffaa" stroke-width="1.2" marker-end="url(#arr-mt)"/>
+              <rect x="128" y="14" width="138" height="52" fill="#00ffaa" fill-opacity="0.10" stroke="#00ffaa" stroke-width="1.4"/>
+              <text x="197" y="30" text-anchor="middle" fill="#00ffaa" font-weight="700">GRU AE</text>
+              <text x="197" y="44" text-anchor="middle" fill="#f0e6ff" font-size="8.5">bf16 + bucket</text>
+              <text x="197" y="56" text-anchor="middle" fill="#9d8dc7" font-size="8.5">TBPTT &middot; 10 epochs</text>
+              <line x1="268" y1="40" x2="286" y2="40" stroke="#00ffaa" stroke-width="1.2" marker-end="url(#arr-mt)"/>
+              <rect x="288" y="14" width="76" height="52" fill="none" stroke="#00ffaa" stroke-width="1.2"/>
+              <text x="326" y="32" text-anchor="middle" fill="#f0e6ff" font-weight="700">encode</text>
+              <text x="326" y="46" text-anchor="middle" fill="#9d8dc7" font-size="8.5">N&times;256</text>
+              <line x1="366" y1="40" x2="384" y2="40" stroke="#00ffaa" stroke-width="1.2" marker-end="url(#arr-mt)"/>
+              <rect x="386" y="14" width="72" height="52" fill="none" stroke="#00ffaa" stroke-width="1.2"/>
+              <text x="422" y="30" text-anchor="middle" fill="#f0e6ff" font-weight="700">HDBSCAN</text>
+              <text x="422" y="44" text-anchor="middle" fill="#9d8dc7" font-size="8.5">+ &epsilon;-confirm</text>
+              <text x="422" y="58" text-anchor="middle" fill="#9d8dc7" font-size="8.5">cuML</text>
+            </g>
+          </svg>
+          <div class="params">
+            <span class="p"><span class="k">hidden</span>=256</span>
+            <span class="p"><span class="k">epochs</span>=10</span>
+            <span class="p"><span class="k">buckets</span>=32</span>
+            <span class="p"><span class="k">tbptt</span>=256</span>
+            <span class="p"><span class="k">drop</span>=0.3</span>
+            <span class="p"><span class="k">min_cooccur</span>=3</span>
+          </div>
+        </div>
+        <div class="more" role="region" aria-label="Embedding pipeline details">
+          <div class="more-hdr">Engineering notes</div>
+          <ul>
+            <li><strong>bf16 autocast</strong> &mdash; same exponent range as fp32, half the memory, no overflow.</li>
+            <li><strong>Bucket batching</strong> (32 buckets, length-grouped) &mdash; one long bus trajectory no longer pads every batch to 3,202 tokens.</li>
+            <li><strong>TBPTT</strong> (chunk = 256) &mdash; decoder gradient capped, no exploding-NaN spirals.</li>
+            <li>Failure modes hit + fixed: NCCL NVLS multicast bug on 4&times; GPUs (env workaround), cache build redundancy (rank-0 pickle), CUDA driver/runtime version mismatch.</li>
+            <li>Loss trajectory: 2.84 &rarr; 2.18 over 10 epochs, monotonic, no NaN, 2 batches rescued by <code>nan_to_num_</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Embedding Outcome -->
+      <div class="tile emb has-more" tabindex="0">
+        <div class="tile-clip">
+          <div class="tile-hdr">
+            <span class="tile-title mint">Outcome</span>
+            <span class="tile-sub">loss 2.84 &rarr; 2.18</span>
+          </div>
+          <div class="stat-row">
+            <div class="bigstat"><div class="v mint">4,041</div><div class="k">Confirmed Fleets</div></div>
+            <div class="bigstat"><div class="v mint">102,779</div><div class="k">Plates</div></div>
+          </div>
+          <svg class="chart" viewBox="0 0 280 96" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Average pairs per plate, by fleet size band">
+            <g font-family="JetBrains Mono" font-size="9">
+              <text x="0" y="9" fill="#9d8dc7" font-size="8">density vs size &middot; avg pairs / plate</text>
+              <line x1="6" y1="80" x2="276" y2="80" stroke="#ffffff14"/>
+              <g transform="translate(8,0)">
+                <rect x="0"   y="79" width="32" height="1.1" fill="#00ffaa" opacity="0.40"/>
+                <rect x="36"  y="78" width="32" height="2.2" fill="#00ffaa" opacity="0.46"/>
+                <rect x="72"  y="73" width="32" height="6.5" fill="#00ffaa" opacity="0.55"/>
+                <rect x="108" y="67" width="32" height="13.0" fill="#00ffaa" opacity="0.65"/>
+                <rect x="144" y="55" width="32" height="24.5" fill="#00ffaa" opacity="0.78"/>
+                <rect x="180" y="52" width="32" height="28.0" fill="#00ffaa" opacity="0.88"/>
+                <rect x="216" y="24" width="32" height="56.0" fill="#00ffaa" opacity="1.0"/>
+              </g>
+              <g transform="translate(8,0)" fill="#f0e6ff" font-size="7.5" text-anchor="middle">
+                <text x="16"  y="77">0.7</text>
+                <text x="52"  y="76">1.4</text>
+                <text x="88"  y="71">4.1</text>
+                <text x="124" y="65">8.2</text>
+                <text x="160" y="53">15.5</text>
+                <text x="196" y="50">17.7</text>
+                <text x="232" y="22">35.3</text>
+              </g>
+              <g transform="translate(8,0)" fill="#9d8dc7" font-size="7" text-anchor="middle">
+                <text x="16"  y="89">3-5</text>
+                <text x="52"  y="89">6-20</text>
+                <text x="88"  y="89">21-50</text>
+                <text x="124" y="89">51-100</text>
+                <text x="160" y="89">101-200</text>
+                <text x="196" y="89">201-500</text>
+                <text x="232" y="89">501+</text>
+              </g>
+            </g>
+          </svg>
+          <div class="chart-cap">Bigger = denser. Real corporate operations.</div>
+        </div>
+        <div class="more" role="region" aria-label="Embedding headline findings">
+          <div class="more-hdr">Headline findings</div>
+          <ul>
+            <li><strong>Cluster 11981</strong>: 759 plates &middot; 55.8 pairs/plate &middot; 12,742 cooccur-windows &mdash; a single large corporate fleet.</li>
+            <li><strong>Cluster 11478</strong>: 685 plates &middot; 12,604 windows &middot; 26,718 pairs &mdash; a second giant operation.</li>
+            <li><strong>97.3 % noise</strong>: HDBSCAN correctly leaves most plates alone &mdash; most vehicles are NOT in any organised group.</li>
+            <li>Density grows monotonically with size &mdash; the right tail isn't statistical noise, it's real fleets.</li>
+            <li>Confirmation rate: 31.8 % of candidate clusters survive the &ge;3-window co-occur test.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ LOWER — cross analysis + conclusion ═══════════════ -->
+  <div class="lower">
+
+    <!-- Cross Analysis -->
+    <div class="tile con">
+      <div class="tile-hdr">
+        <span class="tile-title violet">Cross Analysis</span>
+        <span class="tile-sub">coverage &middot; strengths</span>
+      </div>
+
+      <table class="matrix">
+        <thead>
+          <tr><th>signal</th><th class="c magenta">FPG</th><th class="c cyan">MxG</th><th class="c mint">Emb</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="lbl">top pair (628&times;)</td><td class="c"><span class="yes">&check;</span></td><td class="c"><span class="yes">&check;</span></td><td class="c"><span class="par">&deg;</span></td></tr>
+          <tr><td class="lbl">4-plate always-together</td><td class="c"><span class="yes">&check;</span></td><td class="c"><span class="yes">&check;</span></td><td class="c"><span class="no">&minus;</span></td></tr>
+          <tr><td class="lbl">6-car permanent convoy</td><td class="c"><span class="yes">&check;</span></td><td class="c"><span class="yes">&check;</span></td><td class="c"><span class="no">&minus;</span></td></tr>
+          <tr><td class="lbl">20-plate fixed route</td><td class="c"><span class="par">&deg;</span></td><td class="c"><span class="yes">&check;</span></td><td class="c"><span class="yes">&check;</span></td></tr>
+          <tr><td class="lbl">759-plate operation</td><td class="c"><span class="no">&minus;</span></td><td class="c"><span class="no">&minus;</span></td><td class="c"><span class="yes">&check;</span></td></tr>
+          <tr><td class="lbl">195 large fleets (&gt;50)</td><td class="c"><span class="no">&minus;</span></td><td class="c"><span class="no">&minus;</span></td><td class="c"><span class="yes">&check;</span></td></tr>
+        </tbody>
+      </table>
+
+      <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-dim);margin-top:6px;letter-spacing:1.3px;">
+        <span style="color:var(--c-mint);">&check;</span> clean hit &middot;
+        <span style="color:var(--c-amber);">&deg;</span> partial / diluted &middot;
+        <span style="color:var(--ink-dim);">&minus;</span> miss
+      </div>
+
+      <table class="matrix" style="margin-top:9px;">
+        <thead>
+          <tr><th>method</th><th>uniquely good at</th><th>cannot see</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="lbl magenta">FPG</td><td>small specific convoys (&le;10)</td><td>large fleets (C(N,k) blowup)</td></tr>
+          <tr><td class="lbl cyan">MxG</td><td>directional persistent groups on fixed routes</td><td>route-statistical large ops</td></tr>
+          <tr><td class="lbl mint">Emb</td><td>large statistical fleets (50&ndash;759)</td><td>small specific permanent convoys</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Conclusion -->
+    <div class="tile con">
+      <div class="tile-hdr">
+        <span class="tile-title violet">Conclusion &middot; one city, three lenses</span>
+        <span class="tile-sub">tiered consensus</span>
+      </div>
+
+      <div class="desc">No single primitive sees this city. The three methods <strong>triangulate</strong> &mdash; agreement is signal; gaps are intrinsic blindness, not bug.</div>
+
+      <div class="tier-list">
+        <div class="tier gold">
+          <span class="lvl">TIER 1<small>GOLD</small></span>
+          <span class="txt"><strong style="color:var(--c-mint);">Triple-witnessed.</strong> FP-Growth &cap; MaxGrowth &cap; Embedding-confirmed. Operational core.</span>
+        </div>
+        <div class="tier silver">
+          <span class="lvl">TIER 2<small>SILVER</small></span>
+          <span class="txt"><strong style="color:var(--c-cyan);">Double-witnessed.</strong> Large embedding fleets (MaxGrowth-fragmented) <em>or</em> small FP-Growth convoys (embedding-missed).</span>
+        </div>
+        <div class="tier cand">
+          <span class="lvl">TIER 3<small>CAND.</small></span>
+          <span class="txt"><strong style="color:var(--c-amber);">Single-method.</strong> Investigative leads only.</span>
+        </div>
+      </div>
+
+      <div class="closing">
+        The shadow convoy was never one shadow. <strong>It was the union of three shadows cast by three different lights &mdash; and the city only shows what's at the intersection.</strong>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // ←/→ cross-section nav
+  (() => {
+    const prev = document.body.dataset.prev;
+    const next = document.body.dataset.next;
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft'  && prev) { e.preventDefault(); window.location.href = prev; }
+      if (e.key === 'ArrowRight' && next) { e.preventDefault(); window.location.href = next; }
+    });
+  })();
+
+  // Touch / click toggle for tiles (mobile-friendly — desktop hover works without this)
+  document.querySelectorAll('.tile.has-more').forEach((tile) => {
+    tile.addEventListener('click', (e) => {
+      // Avoid hijacking clicks on links / buttons inside (none here, but defensive)
+      if (e.target.closest('a, button')) return;
+      if (document.documentElement.matches(':hover')) return;  // desktop with mouse
+      tile.classList.toggle('open');
+    });
+  });
+  // CSS additionally responds to the `.open` class for touch devices.
+</script>
+
+<style>
+  /* Touch-tap open state mirrors :hover */
+  .tile.has-more.open { z-index: 60; box-shadow: 0 14px 38px rgba(0,0,0,0.55); border-color: color-mix(in srgb, var(--c-amber) 50%, var(--rule-strong)); }
+  .tile.has-more.open .more { max-height: 320px; opacity: 1; padding: 12px 16px 14px; pointer-events: auto; }
+  .tile.has-more.open::after { transform: rotate(45deg); opacity: 1; }
+</style>
+
+</body>
+</html>

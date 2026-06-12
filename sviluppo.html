@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Convoy · Sviluppo</title>
+  <link rel="stylesheet" href="css/nav.css" />
+  <link rel="stylesheet" href="css/in-process.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+</head>
+<body data-theme="bright" data-prev="index.html" data-next="climax.html">
+
+<div class="scanline-light"></div>
+<div id="scroll-progress"></div>
+
+<nav class="top-nav" aria-label="Project sections">
+  <a class="tab"        data-target="dark"   href="index.html">
+    <span class="zh">Inizio</span><span class="en">Beginning</span>
+  </a>
+  <a class="tab active" data-target="bright" href="sviluppo.html">
+    <span class="zh">Sviluppo</span><span class="en">Development</span>
+  </a>
+  <a class="tab"        data-target="bright" href="climax.html">
+    <span class="zh">Climax</span><span class="en">Climax</span>
+  </a>
+  <a class="tab"        data-target="neon"   href="final.html">
+    <span class="zh">Conclusione</span><span class="en">Conclusion</span>
+  </a>
+  <a class="tab"        data-target="neon"   href="manifesto.html">
+    <span class="zh">Manifesto</span><span class="en">Poster</span>
+  </a>
+</nav>
+
+<nav class="nav-dots" aria-label="Slide navigation">
+  <button class="nav-dot active" data-section="hero"        data-label="COVER"></button>
+  <button class="nav-dot"        data-section="substrate"   data-label="SUBSTRATE"></button>
+  <button class="nav-dot"        data-section="methodology" data-label="METHOD"></button>
+  <button class="nav-dot"        data-section="headline"    data-label="HEADLINE"></button>
+  <button class="nav-dot"        data-section="tables"      data-label="TOP-5"></button>
+  <button class="nav-dot"        data-section="charts"      data-label="CHARTS"></button>
+  <button class="nav-dot"        data-section="fleets"      data-label="FLEETS"></button>
+  <button class="nav-dot"        data-section="forward"     data-label="WHAT'S NEXT"></button>
+</nav>
+
+<div id="page-wrapper">
+
+  <!-- ═════ 0 — COVER ═════ -->
+  <section class="section" id="hero">
+    <div class="section-inner">
+      <p class="kicker">Sviluppo · FP-Growth reproduction</p>
+      <h1 class="section-title">
+        <span class="glitch" data-text="Shadow Convoy">Shadow Convoy</span>
+      </h1>
+      <p class="lede">A faithful reproduction of the baseline FP-Growth convoy miner on a modern Slurm-managed Spark substrate, run end-to-end over the full 31-day, 275.9-million-record dataset. This section retraces the method, the headline output, and the structural readings that sharpened it.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="v">275.9M</div><div class="k">Records</div></div>
+        <div class="hero-stat"><div class="v">5,447</div><div class="k">Convoys Found</div></div>
+        <div class="hero-stat"><div class="v">783</div><div class="k">Plates Involved</div></div>
+        <div class="hero-stat"><div class="v">4 h 38 min</div><div class="k">Wall Time</div></div>
+      </div>
+    </div>
+    <div class="scroll-hint"><span>scroll</span><div class="scroll-arrow"></div></div>
+  </section>
+
+  <!-- ═════ 1 — SUBSTRATE ═════ -->
+  <section class="section" id="substrate">
+    <div class="section-inner">
+      <p class="kicker">01 / Reproduction Substrate</p>
+      <h2 class="section-title">Slurm + Spark <span class="swipe">Standalone</span></h2>
+      <p class="lede">The original work targeted HDFS + YARN on a 5×8c×8 GB cluster. We replace the storage and resource-manager layers with what the platform already provides: <strong>GPFS</strong> as the shared FS, <strong>Slurm</strong> as the container scheduler. Spark runs standalone inside the allocation; the cluster lives only as long as the job.</p>
+      <div class="spec-grid">
+        <div class="spec"><div class="k">Nodes</div><div class="v">5</div><div class="note">one Spark container per Slurm task</div></div>
+        <div class="spec"><div class="k">Cores / node</div><div class="v">20</div><div class="note">18 to executors, 2 reserved</div></div>
+        <div class="spec"><div class="k">RAM / node</div><div class="v">100&nbsp;GB</div><div class="note">75 GB executor, 25 GB reserved</div></div>
+        <div class="spec"><div class="k">Storage</div><div class="v">GPFS</div><div class="note">shared, <code>file://</code> reads</div></div>
+      </div>
+      <div class="pipeline">
+        <div class="step"><span class="ix">01</span><span class="label">sbatch alloc</span>5 containers</div>
+        <div class="step"><span class="ix">02</span><span class="label">start master</span>rank 0</div>
+        <div class="step"><span class="ix">03</span><span class="label">fan workers</span><code>srun</code> × 5</div>
+        <div class="step"><span class="ix">04</span><span class="label">spark-submit</span>client mode</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 2 — METHODOLOGY ═════ -->
+  <section class="section" id="methodology">
+    <div class="section-inner">
+      <p class="kicker">02 / Methodology</p>
+      <h2 class="section-title">FP-Growth + <span class="swipe">Half-Overlap</span></h2>
+
+      <div class="method-row">
+        <div>
+          <p>For each <code>(location, bucket)</code> we form a <strong>transaction</strong> — the distinct plates passing the checkpoint inside that 300 s bucket. Spark MLlib's distributed <strong>Parallel FP-Growth</strong> mines frequent vehicle groups (sizes 2–6) from those transactions.</p>
+          <p>We run the bucketize-and-mine pipeline <em>twice</em> with bucket origins <code>offset = 0</code> and <code>offset = window/2</code>. Convoys split by Grid A's boundary are kept whole by Grid B; we then take <code>max(freq_A, freq_B)</code> per itemset.</p>
+          <p>A density gate at <code>2,000</code> plates/bucket excludes the single 23,595-plate freak bucket at loc 31 that crashed earlier runs — picked from a per-location density study, 15 % above the largest legitimate bucket.</p>
+        </div>
+        <svg class="bucket-svg" viewBox="0 0 360 200" xmlns="http://www.w3.org/2000/svg">
+          <line x1="20" y1="105" x2="340" y2="105" stroke="#5a4f70" stroke-width="1"/>
+          <text x="20"  y="125" font-family="JetBrains Mono" font-size="9" fill="#5a4f70">t=0</text>
+          <text x="335" y="125" font-family="JetBrains Mono" font-size="9" fill="#5a4f70">t</text>
+          <g stroke="#0040ff" fill="none">
+            <rect x="40"  y="40" width="80" height="36" stroke-width="1.5"/>
+            <rect x="120" y="40" width="80" height="36" stroke-width="1.5"/>
+            <rect x="200" y="40" width="80" height="36" stroke-width="1.5"/>
+            <rect x="280" y="40" width="60" height="36" stroke-width="1.5"/>
+          </g>
+          <text x="40" y="34" font-family="JetBrains Mono" font-size="9" fill="#0040ff">GRID A · offset 0</text>
+          <g stroke="#ff0066" fill="none" stroke-dasharray="4 3">
+            <rect x="80"  y="135" width="80" height="36" stroke-width="1.5"/>
+            <rect x="160" y="135" width="80" height="36" stroke-width="1.5"/>
+            <rect x="240" y="135" width="80" height="36" stroke-width="1.5"/>
+          </g>
+          <text x="80" y="187" font-family="JetBrains Mono" font-size="9" fill="#ff0066">GRID B · offset window/2</text>
+          <circle cx="116" cy="105" r="4" fill="#0040ff"/>
+          <circle cx="124" cy="105" r="4" fill="#0040ff"/>
+          <text x="100" y="100" font-family="JetBrains Mono" font-size="8" fill="#5a4f70">pair</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 3 — HEADLINE ═════ -->
+  <section class="section" id="headline">
+    <div class="section-inner">
+      <p class="kicker">03 / Filter &amp; Headline</p>
+      <h2 class="section-title"><span class="glitch" data-text="5,447">5,447</span> convoys</h2>
+      <p class="lede">Drawn from only <strong>783 distinct plates</strong> — 0.0036 % of the vehicle population. Convoy signal is sparse and sharp.</p>
+      <div class="filter-bar">
+        <span class="pill"><span class="k">window</span><span class="v">300&nbsp;s</span></span>
+        <span class="pill"><span class="k">min_count</span><span class="v">50</span></span>
+        <span class="pill"><span class="k">min_cars</span><span class="v">2</span></span>
+        <span class="pill"><span class="k">max_cars</span><span class="v">6</span></span>
+        <span class="pill"><span class="k">density_cap</span><span class="v">2,000</span></span>
+        <span class="pill"><span class="k">grids</span><span class="v">0 + 150&nbsp;s</span></span>
+      </div>
+
+      <div class="k-summary"><span class="k-label">k=2</span><span class="k-text">1,369 pairs · top <code>(477634, 491688)</code></span><span class="k-num">628</span></div>
+      <div class="k-summary"><span class="k-label">k=3</span><span class="k-text">730 triples · top <code>(1737487, 3279908, 4863665)</code></span><span class="k-num">195</span></div>
+      <div class="k-summary"><span class="k-label">k=4</span><span class="k-text">1,054 quads · top <code>(17207389, 17210840, 17210845, 396910)</code></span><span class="k-num">160</span></div>
+      <div class="k-summary"><span class="k-label">k=5</span><span class="k-text">1,254 quints · top <code>{16970573, 16972992, 3271142, 3542309, 511670}</code></span><span class="k-num">109</span></div>
+      <div class="k-summary"><span class="k-label">k=6</span><span class="k-text">1,040 hexes · same fleet + 18150551</span><span class="k-num">103</span></div>
+    </div>
+  </section>
+
+  <!-- ═════ 4 — TOP-5 TABLES ═════ -->
+  <section class="section" id="tables">
+    <div class="section-inner">
+      <p class="kicker">04 / Top-5 Per Convoy Size</p>
+      <h2 class="section-title">The <span class="swipe">Leaderboards</span></h2>
+
+      <div class="k-tabs">
+        <button class="k-tab-btn active" data-k="2">k = 2</button>
+        <button class="k-tab-btn"        data-k="3">k = 3</button>
+        <button class="k-tab-btn"        data-k="4">k = 4</button>
+        <button class="k-tab-btn"        data-k="5">k = 5</button>
+        <button class="k-tab-btn"        data-k="6">k = 6</button>
+      </div>
+
+      <div class="k-pane active" data-k="2">
+        <table class="k-table">
+          <thead><tr><th style="width:48px;">#</th><th>plates</th><th style="text-align:right;">count</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>477634, 491688</td><td class="count">628</td></tr>
+            <tr><td>2</td><td>477634, 516583</td><td class="count">418</td></tr>
+            <tr><td>3</td><td>149912, 405007</td><td class="count">411</td></tr>
+            <tr><td>4</td><td>405007, 413224</td><td class="count">368</td></tr>
+            <tr><td>5</td><td>149912, 413224</td><td class="count">361</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="k-pane" data-k="3">
+        <table class="k-table">
+          <thead><tr><th style="width:48px;">#</th><th>plates</th><th style="text-align:right;">count</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>1737487, 3279908, 4863665</td><td class="count">195</td></tr>
+            <tr><td>2</td><td>1737487, 3279908, 5093843</td><td class="count">183</td></tr>
+            <tr><td>3</td><td>477634, 491688, 516583</td><td class="count">179</td></tr>
+            <tr><td>4</td><td>3279908, 4863665, 5093843</td><td class="count">178</td></tr>
+            <tr><td>5</td><td>149912, 405007, 413224</td><td class="count">171</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="k-pane" data-k="4">
+        <table class="k-table">
+          <thead><tr><th style="width:48px;">#</th><th>plates</th><th style="text-align:right;">count</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>17207389, 17210840, 17210845, 396910</td><td class="count">160</td></tr>
+            <tr><td>2</td><td>1737487, 3279908, 4863665, 5093843</td><td class="count">125</td></tr>
+            <tr><td>3</td><td>3279908, 4863665, 4945115, 4954957</td><td class="count">120</td></tr>
+            <tr><td>4</td><td>1737487, 3279908, 4863665, 4954957</td><td class="count">118</td></tr>
+            <tr><td>5</td><td>16970573, 16972992, 3271142, 3542309</td><td class="count">117</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="k-pane" data-k="5">
+        <table class="k-table">
+          <thead><tr><th style="width:48px;">#</th><th>plates</th><th style="text-align:right;">count</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>16970573, 16972992, 3271142, 3542309, 511670</td><td class="count">109</td></tr>
+            <tr><td>2</td><td>16970573, 16972992, 18150551, 3271142, 511670</td><td class="count">106</td></tr>
+            <tr><td>3</td><td>16970573, 16972992, 18150551, 3271142, 3542309</td><td class="count">105</td></tr>
+            <tr><td>4</td><td>16970573, 18150551, 3271142, 3542309, 511670</td><td class="count">103</td></tr>
+            <tr><td>5</td><td>16972992, 18150551, 3271142, 3542309, 511670</td><td class="count">103</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="k-pane" data-k="6">
+        <table class="k-table">
+          <thead><tr><th style="width:48px;">#</th><th>plates</th><th style="text-align:right;">count</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>16970573, 16972992, 18150551, 3271142, 3542309, 511670</td><td class="count">103</td></tr>
+            <tr><td>2</td><td>16970573, 16972992, 18139166, 3271142, 3542309, 511670</td><td class="count">98</td></tr>
+            <tr><td>3</td><td>16970573, 16972992, 18139166, 18150551, 3271142, 511670</td><td class="count">94</td></tr>
+            <tr><td>4</td><td>16970573, 16972992, 18139166, 18150551, 3271142, 3542309</td><td class="count">93</td></tr>
+            <tr><td>5</td><td>16970573, 18139166, 18150551, 3271142, 3542309, 511670</td><td class="count">93</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 5 — CHARTS ═════ -->
+  <section class="section" id="charts">
+    <div class="section-inner">
+      <p class="kicker">05 / Distributions</p>
+      <h2 class="section-title">Trends in <span class="swipe">Three Pictures</span></h2>
+      <div class="charts">
+        <figure>
+          <img src="img/charts/size_distribution.png" alt="Convoys per size k">
+          <figcaption>Convoys per <em>k</em>. The inverted-U (k=2 falls, then k=4–6 rebounds) is the combinatorial fingerprint of structured fleets — a stable n-vehicle group generates <code>C(n,k)</code> subset-itemsets.</figcaption>
+        </figure>
+        <figure>
+          <img src="img/charts/count_distribution.png" alt="Co-occurrence count histogram by k">
+          <figcaption>Co-occurrence count per <em>k</em>, log y-axis. Long tails and clear stratification — larger convoys tail off faster.</figcaption>
+        </figure>
+        <figure>
+          <img src="img/charts/super_connectors.png" alt="Super-connector plates">
+          <figcaption>Top-15 plates by # convoys they appear in. The four-way tie at exactly <strong>1,548</strong> = "always observed together" — an unambiguous fleet signature.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ 6 — FLEETS ═════ -->
+  <section class="section" id="fleets">
+    <div class="section-inner">
+      <p class="kicker">06 / Operational Interpretation</p>
+      <h2 class="section-title">Three <span class="swipe">Fleets</span></h2>
+      <div class="fleet-grid">
+        <div class="fleet a">
+          <h3>FLEET&nbsp;A</h3>
+          <div class="tagline">20×/day duo</div>
+          <div class="members"><code>477634</code>, <code>491688</code></div>
+          <div class="reading">628 co-occurrences in 31 days = 20× every single day. Not "frequent co-travel" — these two vehicles operate as a unit on a fixed schedule. Paired commercial service is the natural reading.</div>
+        </div>
+        <div class="fleet b">
+          <h3>FLEET&nbsp;B</h3>
+          <div class="tagline">loose 4-car cluster</div>
+          <div class="members"><code>1737487</code>, <code>3279908</code>, <code>4863665</code>, <code>5093843</code></div>
+          <div class="reading">Dominates the k = 3 and k = 4 leaderboards in mixed combinations. High pair-co-occurrence rates but not always synchronized — same-route commuting, not formation driving.</div>
+        </div>
+        <div class="fleet d">
+          <h3>FLEET&nbsp;D</h3>
+          <div class="tagline">permanent 6-car unit</div>
+          <div class="members"><code>16970573</code>, <code>16972992</code>, <code>18150551</code>, <code>3271142</code>, <code>3542309</code>, <code>511670</code></div>
+          <div class="reading">Four of these plates appear in <strong>exactly 1,548</strong> convoys each — they are <em>always observed together</em>. The strongest actionable finding: an organized six-vehicle unit (security escort, freight relay, or similar).</div>
+        </div>
+      </div>
+      <div class="caveat"><strong>Caveat:</strong> plates <code>16970573 / 16972992</code> and <code>17210840 / 17210845</code> differ by a single digit; a sampling verification pass on raw frames should resolve which convoys are real and which are OCR artifacts.</div>
+    </div>
+  </section>
+
+  <!-- ═════ 7 — WHAT'S NEXT (MaxGrowth annotations) ═════ -->
+  <section class="section" id="forward">
+    <div class="section-inner">
+      <p class="kicker">07 / Annotations toward Climax</p>
+      <h2 class="section-title">From convoy to <span class="swipe">trajectory</span></h2>
+      <p class="lede">FP-Growth treated each <code>(location, 5-min bucket)</code> as one transaction — set-of-cells semantics. It carried us to 5,447 convoys and three identifiable fleets, but it leaves three structural deficiencies the next section addresses:</p>
+      <div class="forward-grid">
+        <div class="forward-col">
+          <h3>NO ROUTE STRUCTURE</h3>
+          <p>FP-Growth knows "these plates were in many of the same cells" but not "these plates traversed cameras A → B → C in order." The next algorithm (MaxGrowth) promotes route to a first-class object.</p>
+        </div>
+        <div class="forward-col right">
+          <h3>NO MISSING-DETECTION TOLERANCE</h3>
+          <p>A 6-vehicle fleet that misses one camera in one bucket splits into smaller subsets and loses its top-line co-occurrence count. MaxGrowth's <code>d</code> parameter explicitly tolerates a bounded number of missing detections per route.</p>
+        </div>
+      </div>
+      <div class="open-q"><b>The bridge —</b> next section: how the trajectory framing reframes the same data, and what implementation we built around it.</div>
+    </div>
+  </section>
+
+</div>
+
+<script src="js/in-process.js"></script>
+</body>
+</html>
