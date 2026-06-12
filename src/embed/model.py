@@ -61,6 +61,14 @@ class Seq2SeqAE(nn.Module):
         self.emb_dim = emb_dim
         self.hidden = hidden
         self.layers = layers
+        # Truncated-BPTT chunk size for the decoder. 0 = off (vanilla full-target
+        # decoder pass). When > 0, the decoder is run in chunks of this size and
+        # the hidden state is `.detach()`-ed between chunks, bounding decoder
+        # BPTT depth at `tbptt_chunk` even when target length >> chunk.
+        # See doc/Embeddings.md (§ "TBPTT and bucket batching") for the
+        # gradient-flow caveat (encoder still trains, but its loss signal comes
+        # from chunk 0 only).
+        self.tbptt_chunk = 0
 
     def encode(self, src, src_len):
         """Return the trajectory embedding: the last layer's final hidden state."""
@@ -78,8 +86,30 @@ class Seq2SeqAE(nn.Module):
     def forward(self, src, src_len, tgt_in):
         h = self.encode(src, src_len)
         y = self.tok_emb(tgt_in)
-        dec, _ = self.decoder(y, h)
-        return self.out(dec)                  # (B, T, vocab) logits
+        if self.tbptt_chunk <= 0:
+            dec, _ = self.decoder(y, h)
+            return self.out(dec)              # (B, T, vocab) logits
+
+        # ── Truncated BPTT (decoder side) ────────────────────────────────
+        # Run the decoder in time-chunks of `tbptt_chunk`. Between chunks,
+        # detach the hidden state so backward cannot propagate gradient
+        # through the chunk boundary — this caps decoder BPTT depth at
+        # `tbptt_chunk` regardless of target length.
+        #
+        # We still build the full (B, T, V) logits tensor and return it in
+        # one forward call, so the training loop's loss + backward semantics
+        # (and DDP's gradient sync) don't change. The detach lives entirely
+        # inside this forward.
+        chunk = int(self.tbptt_chunk)
+        T = tgt_in.size(1)
+        dec_h = h
+        chunk_logits = []
+        for start in range(0, T, chunk):
+            end = min(start + chunk, T)
+            dec_out, dec_h_new = self.decoder(y[:, start:end], dec_h)
+            chunk_logits.append(self.out(dec_out))
+            dec_h = dec_h_new.detach()        # truncate BPTT for next chunk
+        return torch.cat(chunk_logits, dim=1)  # (B, T, V)
 
 
 def corrupt(tokens, drop_prob, rng):
