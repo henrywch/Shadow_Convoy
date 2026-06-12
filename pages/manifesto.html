@@ -226,10 +226,11 @@
 
     /* ─── Lower section ─── */
     .lower { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; min-height: 0; }
-    .lower .tile { padding: 14px 18px 14px; }
+    .lower .tile { padding: 11px 15px 11px; gap: 5px; }
+    .lower .tile-hdr { margin-bottom: 4px; }
 
-    .matrix { width: 100%; border-collapse: collapse; font-size: 11.5px; }
-    .matrix th, .matrix td { padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+    .matrix { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .matrix th, .matrix td { padding: 3.5px 7px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
     .matrix th {
       font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-dim);
       letter-spacing: 1.3px; text-transform: uppercase; font-weight: 400;
@@ -237,25 +238,25 @@
     }
     .matrix th.c, .matrix td.c { text-align: center; }
     .matrix td.lbl { color: var(--ink); }
-    .matrix td .yes { color: var(--c-mint); font-weight: 800; font-size: 14px; }
-    .matrix td .par { color: var(--c-amber); font-weight: 800; font-size: 14px; }
-    .matrix td .no  { color: var(--ink-dim); font-size: 14px; }
+    .matrix td .yes { color: var(--c-mint); font-weight: 800; font-size: 13px; }
+    .matrix td .par { color: var(--c-amber); font-weight: 800; font-size: 13px; }
+    .matrix td .no  { color: var(--ink-dim); font-size: 13px; }
 
-    .tier-list { display: grid; gap: 8px; margin-top: 6px; }
+    .tier-list { display: grid; gap: 5px; margin-top: 4px; }
     .tier {
-      display: grid; grid-template-columns: 78px 1fr; gap: 12px; align-items: start;
-      border-left: 3px solid; padding: 5px 0 5px 12px;
+      display: grid; grid-template-columns: 68px 1fr; gap: 10px; align-items: start;
+      border-left: 3px solid; padding: 3px 0 3px 10px;
     }
-    .tier .lvl { font-family: var(--font-head); font-weight: 900; font-size: 13px; letter-spacing: 1.8px; line-height: 1.05; }
-    .tier .lvl small { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: 1.4px; margin-top: 4px; }
-    .tier .txt { font-size: 11.5px; line-height: 1.5; color: var(--ink); }
+    .tier .lvl { font-family: var(--font-head); font-weight: 900; font-size: 12px; letter-spacing: 1.6px; line-height: 1.05; }
+    .tier .lvl small { display: block; font-size: 9px; font-weight: 700; letter-spacing: 1.3px; margin-top: 3px; }
+    .tier .txt { font-size: 11px; line-height: 1.4; color: var(--ink); }
     .tier.gold   { border-color: var(--c-mint); } .tier.gold   .lvl { color: var(--c-mint); }
     .tier.silver { border-color: var(--c-cyan); } .tier.silver .lvl { color: var(--c-cyan); }
     .tier.cand   { border-color: var(--c-amber); } .tier.cand   .lvl { color: var(--c-amber); }
 
     .closing {
-      margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--rule);
-      font-family: var(--font-mono); font-size: 11.5px; line-height: 1.55;
+      margin-top: auto; padding-top: 6px; border-top: 1px dashed var(--rule);
+      font-family: var(--font-mono); font-size: 11px; line-height: 1.4;
       color: var(--ink); font-style: italic;
     }
     .closing strong { color: var(--c-mint); font-style: normal; }
@@ -740,7 +741,11 @@
     <div class="tile con">
       <div class="tile-hdr">
         <span class="tile-title violet">Cross Analysis</span>
-        <span class="tile-sub">coverage &middot; strengths</span>
+        <span class="tile-sub">
+          <span style="color:var(--c-mint);">&check;</span>&nbsp;hit &middot;
+          <span style="color:var(--c-amber);">&deg;</span>&nbsp;partial &middot;
+          <span style="color:var(--ink-dim);">&minus;</span>&nbsp;miss
+        </span>
       </div>
 
       <table class="matrix">
@@ -757,19 +762,13 @@
         </tbody>
       </table>
 
-      <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-dim);margin-top:6px;letter-spacing:1.3px;">
-        <span style="color:var(--c-mint);">&check;</span> clean hit &middot;
-        <span style="color:var(--c-amber);">&deg;</span> partial / diluted &middot;
-        <span style="color:var(--ink-dim);">&minus;</span> miss
-      </div>
-
-      <table class="matrix" style="margin-top:9px;">
+      <table class="matrix" style="margin-top:6px;">
         <thead>
           <tr><th>method</th><th>uniquely good at</th><th>cannot see</th></tr>
         </thead>
         <tbody>
           <tr><td class="lbl magenta">FPG</td><td>small specific convoys (&le;10)</td><td>large fleets (C(N,k) blowup)</td></tr>
-          <tr><td class="lbl cyan">MxG</td><td>directional persistent groups on fixed routes</td><td>route-statistical large ops</td></tr>
+          <tr><td class="lbl cyan">MxG</td><td>directional groups on fixed routes</td><td>route-statistical large ops</td></tr>
           <tr><td class="lbl mint">Emb</td><td>large statistical fleets (50&ndash;759)</td><td>small specific permanent convoys</td></tr>
         </tbody>
       </table>
@@ -778,20 +777,20 @@
     <!-- Conclusion -->
     <div class="tile con">
       <div class="tile-hdr">
-        <span class="tile-title violet">Conclusion &middot; one city, three lenses</span>
+        <span class="tile-title violet">Conclusion &middot; three lenses</span>
         <span class="tile-sub">tiered consensus</span>
       </div>
 
-      <div class="desc">No single primitive sees this city. The three methods <strong>triangulate</strong> &mdash; agreement is signal; gaps are intrinsic blindness, not bug.</div>
+      <div class="desc dim">Three methods <strong>triangulate</strong>. Agreement is signal; gaps are intrinsic, not bug.</div>
 
       <div class="tier-list">
         <div class="tier gold">
           <span class="lvl">TIER 1<small>GOLD</small></span>
-          <span class="txt"><strong style="color:var(--c-mint);">Triple-witnessed.</strong> FP-Growth &cap; MaxGrowth &cap; Embedding-confirmed. Operational core.</span>
+          <span class="txt"><strong style="color:var(--c-mint);">Triple-witnessed.</strong> FPG &cap; MxG &cap; Emb. Operational core.</span>
         </div>
         <div class="tier silver">
           <span class="lvl">TIER 2<small>SILVER</small></span>
-          <span class="txt"><strong style="color:var(--c-cyan);">Double-witnessed.</strong> Large embedding fleets (MaxGrowth-fragmented) <em>or</em> small FP-Growth convoys (embedding-missed).</span>
+          <span class="txt"><strong style="color:var(--c-cyan);">Double-witnessed.</strong> Large Emb fleets (MxG-fragmented) or small FPG convoys (Emb-missed).</span>
         </div>
         <div class="tier cand">
           <span class="lvl">TIER 3<small>CAND.</small></span>
@@ -800,7 +799,7 @@
       </div>
 
       <div class="closing">
-        The shadow convoy was never one shadow. <strong>It was the union of three shadows cast by three different lights &mdash; and the city only shows what's at the intersection.</strong>
+        <strong>The city only shows what's at the intersection of the three shadows.</strong>
       </div>
     </div>
 
