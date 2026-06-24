@@ -20,7 +20,23 @@
  vectors/ ─────► │ cluster embeddings → groups;  │ ──────────────► fleets.csv
  + 31.csv        │ confirm via co-occurrence     │                 cluster_id, n_plates,
                  └───────────────────────────────┘                 n_cooccur_windows, confirmed, members
+                 ┌─ Stage 4: asset services ─────┐   cuVS / cuML (GPU), sklearn (CPU)
+ vectors/ ─────► │ 4a ann_index.py  : ANN search │ ──────────────► ann/{cagra.idx, neighbors.csv}
+ + fleets.csv    │ 4b project_2d.py : UMAP → 2-D │                 projection/{projection.csv, .png}
+                 └───────────────────────────────┘
 ```
+
+Stage 4 makes the `(3.83 M, 256)` matrix *queryable* (doc/Downstream_Tasks.md §0.5):
+`ann_index.py` answers "find vehicles like plate X" via a cuVS CAGRA index (sklearn
+brute-cosine on CPU); `project_2d.py` lays the fleet space out in 2-D (cuML UMAP on GPU,
+t-SNE/PCA on CPU), colored by embedding fleet. Both are read-only consumers — run them
+after Stage 3. As downstream consumers they live under
+**`scripts/downstream/embedding_assets/`** and write to **`data/downstream/embedding_assets/`**
+(launcher: `src/slurm/gpu_assets.sbatch`).
+
+> **Canonical vectors dir is `embed_31/vectors/`.** `vectors_0610/` and `vectors_0609/`
+> are all-NaN failed Stage-2 runs; every Stage-3/4 script now drops non-finite rows and
+> refuses an all-NaN matrix with a pointer to `vectors/`.
 
 **Output is a *cluster* of plates** (a fleet), same shape as `graph_communities.py`'s
 `fleets.csv` — not a route/sequence (that's MaxGrowth). The sequence is consumed to build
@@ -60,6 +76,21 @@ GPUS_PER_NODE=1 \
 TRAIN_ARGS="--epochs 15 --batch-size 512 --hidden 256 --emb-dim 128 --drop-prob 0.3" \
 CLUSTER_ARGS="--algo hdbscan --min-cluster-size 3 --min-cooccur-windows 3" \
   sbatch $REPO/src/slurm/gpu_embed.sbatch
+
+# ── Stage 4 — asset services (ANN + 2-D projection) ─────────────────────
+EMBED_DIR=$REPO/data/output/embed_31/vectors \
+FLEETS=$REPO/data/output/embed_31/fleets.csv \
+QUERY=477634,491688,3271142 \
+  sbatch $REPO/src/slurm/gpu_assets.sbatch
+
+# …or run a service directly (auto-detects GPU, falls back to CPU):
+.venv-gpu/bin/python scripts/downstream/embedding_assets/ann_index.py \
+    $REPO/data/output/embed_31/vectors \
+    --query 477634 --k 20 --save-index $REPO/data/downstream/embedding_assets/ann
+.venv-gpu/bin/python scripts/downstream/embedding_assets/project_2d.py \
+    $REPO/data/output/embed_31/vectors \
+    --fleets $REPO/data/output/embed_31/fleets.csv --max-points 200000 \
+    --out-dir $REPO/data/downstream/embedding_assets/projection
 ```
 
 ## CPU / GPU behavior
