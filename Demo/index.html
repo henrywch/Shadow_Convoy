@@ -58,26 +58,27 @@
   <div class="wrap">
     <div class="kicker">02 · 三检测器结果</div>
     <h2>三种方法，三种"同行"</h2>
-    <p class="lead">← / → 切换三种检测器与能力雷达图。三者按构造彼此分歧——被多个度量空间同时认可的群体才是强证据。</p>
+    <p class="lead">← / → 切换：三种检测器对比 ↔ 能力雷达图。三者按构造彼此分歧——被多个度量空间同时认可的群体才是强证据。</p>
     <div class="carousel">
       <button class="car-arrow prev" aria-label="prev">‹</button>
       <button class="car-arrow next" aria-label="next">›</button>
       <div class="car-viewport"><div class="car-track">
-        <div class="slide"><div class="card"><span class="tag">FP-Growth</span><h3>格点共现车队</h3>
-          <p>5,447 个车队 · 仅 783 个车牌（0.0036%）· 同行信号极稀疏。</p>
-          <div class="chart" data-chart="fpg_size"></div>
-          <div class="chart" data-chart="fpg_super"></div></div></div>
-        <div class="slide"><div class="card"><span class="tag">MaxGrowth</span><h3>有向路径模式</h3>
-          <p>223,184 个模式 · 87,047 个车牌 · 路径长度随相机数骤减。</p>
-          <div class="chart" data-chart="mg_routelen"></div>
-          <div class="chart" data-chart="mg_corridors"></div></div></div>
-        <div class="slide"><div class="card"><span class="tag">Embedding</span><h3>轨迹嵌入聚类</h3>
-          <p>3.83M×256 向量 · 12,709 个簇 · 4,041 个经共现确认。</p>
-          <div class="chart" data-chart="emb_confirm"></div>
-          <div class="chart" data-chart="emb_sizes"></div></div></div>
+        <div class="slide slide-methods"><div class="cards cols-3">
+          <div class="card"><span class="tag">FP-Growth</span><h3>格点共现车队</h3>
+            <p>5,447 车队 · 仅 783 车牌 · 信号极稀疏。</p>
+            <div class="chart" data-chart="fpg_size"></div>
+            <div class="chart" data-chart="fpg_super"></div></div>
+          <div class="card"><span class="tag">MaxGrowth</span><h3>有向路径模式</h3>
+            <p>223,184 模式 · 87,047 车牌 · 带方向。</p>
+            <div class="chart" data-chart="mg_routelen"></div>
+            <div class="chart" data-chart="mg_corridors"></div></div>
+          <div class="card"><span class="tag">Embedding</span><h3>轨迹嵌入聚类</h3>
+            <p>3.83M×256 · 12,709 簇 · 4,041 确认。</p>
+            <div class="chart" data-chart="emb_confirm"></div>
+            <div class="chart" data-chart="emb_sizes"></div></div>
+        </div></div>
         <div class="slide slide-radar"><div class="chart" data-chart="detector_radar"></div></div>
       </div></div>
-      <div class="car-dots"></div>
     </div>
   </div>
 </section>

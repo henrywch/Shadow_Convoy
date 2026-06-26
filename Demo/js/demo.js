@@ -25,17 +25,19 @@
     var wmax = seg.reduce(function (m, s) { return Math.max(m, s[4]); }, 1);
     var lines = seg.map(function (s) {
       return { coords: [[s[0], s[1]], [s[2], s[3]]], value: s[4],
-        lineStyle: { width: 0.6 + 3.4 * s[4] / wmax } };
+        lineStyle: { width: 1.2 + 4.5 * s[4] / wmax } };
     });
     return {
-      backgroundColor: '#fff', title: { text: '同行走廊流量', subtext: '群体流动（动画箭头）', left: 'center', top: 6, textStyle: { fontSize: 15 }, subtextStyle: { fontSize: 11 } },
+      backgroundColor: '#fff', title: { text: '同行走廊流量', subtext: '静态走廊线 + 动画流向', left: 'center', top: 6, textStyle: { fontSize: 15 }, subtextStyle: { fontSize: 11 } },
       grid: { top: 50, bottom: 16, left: 12, right: 12 }, xAxis: ax, yAxis: ax,
       visualMap: { show: false, min: 0, max: wmax, dimension: 2, inRange: { color: ['#7c6cff', '#37e1ff', '#43e0a0', '#ffc24b'] } },
       series: [
         { type: 'scatter', symbolSize: 3, data: cam, itemStyle: { color: '#dde2ea' }, silent: true },
         { type: 'lines', coordinateSystem: 'cartesian2d', data: lines, polyline: false,
-          effect: { show: true, period: 4, trailLength: .4, symbol: 'arrow', symbolSize: 5, color: 'rgba(55,225,255,.9)' },
-          lineStyle: { color: '#7c6cff', opacity: .55, curveness: 0 } }
+          lineStyle: { opacity: .85, curveness: 0 } },                                  // solid drawn corridors
+        { type: 'lines', coordinateSystem: 'cartesian2d', data: lines, polyline: false, silent: true,
+          effect: { show: true, period: 4, trailLength: .25, symbol: 'arrow', symbolSize: 5, color: 'rgba(20,30,60,.85)' },
+          lineStyle: { width: 0, opacity: 0 } }                                          // moving arrows on top
       ]
     };
   }
@@ -103,24 +105,17 @@
   dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); }); });
 
   // ── methods carousel ──────────────────────────────────────────────────────
-  var car = { i: 0, n: 0, track: null, dots: null,
+  var car = { i: 0, n: 0, track: null,
     go: function (j) {
       this.n = this.track.children.length;
-      this.i = (j + this.n) % this.n;
+      this.i = (j + this.n) % this.n;          // wrap (only 2 slides, arrows only)
       this.track.style.transform = 'translateX(-' + this.i * 100 + '%)';
-      [].forEach.call(this.dots.children, function (b, k) { b.classList.toggle('on', k === car.i); });
       resizeIn(sections[METHODS]);
     } };
   function initCarousel() {
     car.track = document.querySelector('.car-track');
-    car.dots = document.querySelector('.car-dots');
     if (!car.track) return;
     car.n = car.track.children.length;
-    for (var k = 0; k < car.n; k++) {
-      var b = document.createElement('button'); if (k === 0) b.className = 'on';
-      (function (kk) { b.addEventListener('click', function () { car.go(kk); }); })(k);
-      car.dots.appendChild(b);
-    }
     document.querySelector('.car-arrow.prev').addEventListener('click', function () { car.go(car.i - 1); });
     document.querySelector('.car-arrow.next').addEventListener('click', function () { car.go(car.i + 1); });
   }
