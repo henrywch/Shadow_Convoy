@@ -853,5 +853,93 @@ window.CHARTS = {
     }
    }
   ]
+ },
+ "coverage": {
+  "title": {
+   "text": "各检测器覆盖的车牌数",
+   "subtext": "对数轴 · 同行人群覆盖对比",
+   "left": "center",
+   "top": 8,
+   "textStyle": {
+    "fontSize": 18,
+    "color": "#222"
+   },
+   "subtextStyle": {
+    "fontSize": 12,
+    "color": "#888"
+   }
+  },
+  "backgroundColor": "#fff",
+  "grid": {
+   "left": 120,
+   "right": 90,
+   "top": 70,
+   "bottom": 44
+  },
+  "xAxis": {
+   "type": "log",
+   "min": 100,
+   "name": "覆盖车牌数（对数）",
+   "nameLocation": "middle",
+   "nameGap": 28,
+   "axisLine": {
+    "lineStyle": {
+     "color": "#888"
+    }
+   },
+   "axisLabel": {
+    "color": "#333",
+    "fontSize": 13
+   },
+   "nameTextStyle": {
+    "color": "#333"
+   }
+  },
+  "yAxis": {
+   "type": "category",
+   "data": [
+    "FP-Growth",
+    "MaxGrowth",
+    "Embedding"
+   ],
+   "axisLine": {
+    "lineStyle": {
+     "color": "#888"
+    }
+   },
+   "axisLabel": {
+    "color": "#333",
+    "fontSize": 13
+   },
+   "nameTextStyle": {
+    "color": "#333"
+   }
+  },
+  "series": [
+   {
+    "type": "bar",
+    "data": [
+     783,
+     87047,
+     102779
+    ],
+    "barWidth": "52%",
+    "itemStyle": {
+     "color": "#7262FD",
+     "borderRadius": [
+      0,
+      4,
+      4,
+      0
+     ]
+    },
+    "label": {
+     "show": true,
+     "position": "right",
+     "color": "#333",
+     "formatter": "{c} 车牌"
+    }
+   }
+  ]
  }
 };

@@ -73,9 +73,9 @@
             <div class="chart" data-chart="mg_routelen"></div>
             <div class="chart" data-chart="mg_corridors"></div></div>
           <div class="card"><span class="tag">Embedding</span><h3>轨迹嵌入聚类</h3>
-            <p>3.83M×256 · 12,709 簇 · 4,041 确认。</p>
-            <div class="chart" data-chart="emb_confirm"></div>
-            <div class="chart" data-chart="emb_sizes"></div></div>
+            <p>3.83M×256 · 每车一向量 · 覆盖 102,779 车牌。</p>
+            <div class="chart" data-embchart="proj"></div>
+            <div class="chart" data-chart="emb_confirm"></div></div>
         </div></div>
         <div class="slide slide-radar"><div class="chart" data-chart="detector_radar"></div></div>
       </div></div>
@@ -165,10 +165,14 @@
     <h2>一致性 &gt; 任何单检测器的 Top-K</h2>
     <p class="lead">三种互补度量空间 + 跨检测器共识，把高频假阳性自动过滤，显著提升可解释性与可信度；
       相机转移图又独立复现了路径检测器的走廊，多重证据相互印证。全部下游产物均在 31 天全量数据上验证。</p>
-    <div class="cards cols-3" style="margin-top:24px">
-      <div class="card"><div class="bignum">87,047</div><p>MaxGrowth 覆盖车牌（vs FP-Growth 783）</p></div>
-      <div class="card"><div class="bignum">19</div><p>三检测器一致的强同行组</p></div>
-      <div class="card"><div class="bignum">8,668</div><p>套牌候选车牌（0.04%）</p></div>
+    <div class="cards cols-2" style="align-items:center;margin-top:20px">
+      <div class="card"><div class="chart" data-chart="coverage" style="height:40vh"></div></div>
+      <div class="card">
+        <div class="bignum">102,779 <small>Embedding 覆盖车牌</small></div>
+        <p style="margin-top:6px">vs MaxGrowth 87,047 · FP-Growth 783 —— 嵌入与路径同量级，远超共现伪影。</p>
+        <div class="bignum" style="margin-top:16px">19 <small>三检一致强同行组</small></div>
+        <div class="bignum" style="margin-top:16px">8,668 <small>套牌候选车牌（0.04%）</small></div>
+      </div>
     </div>
   </div>
 </section>
@@ -193,6 +197,7 @@
 <script src="js/charts.js"></script>
 <script src="js/mapdata.js"></script>
 <script src="js/seed_data.js"></script>
+<script src="js/embdata.js"></script>
 <script src="js/demo.js"></script>
 </body>
 </html>
