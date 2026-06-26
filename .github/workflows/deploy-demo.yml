@@ -16,15 +16,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Publishes demo/ into the gh-pages branch under /demo, served at
-      # https://<user>.github.io/Shadow_Convoy/demo/ . keep_files preserves the
-      # main pages/ site at the gh-pages root (and vice-versa).
-      - name: Deploy demo/ to gh-pages /demo
+      # Publishes demo/ into this repo's gh-pages branch under /Demo, served at
+      # https://henrywch.github.io/Shadow_Convoy/Demo/ . keep_files preserves the
+      # main pages/ site at the gh-pages root (and vice-versa). Uses the default
+      # GITHUB_TOKEN — no extra secret needed (same repo).
+      - name: Deploy demo/ to gh-pages /Demo
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./demo
           publish_branch: gh-pages
-          destination_dir: demo
+          destination_dir: Demo
           keep_files: true
           commit_message: "deploy demo: ${{ github.event.head_commit.message }}"

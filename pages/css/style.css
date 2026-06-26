@@ -1080,6 +1080,13 @@ h3 {
   box-shadow: var(--glow-pink);
 }
 
+.hero-actions {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 34px;
+}
+
 .outro-final-stat {
   margin-top: 60px;
   font-family: var(--font-mono);
