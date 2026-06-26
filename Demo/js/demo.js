@@ -26,15 +26,17 @@
     function segColor(r) { return r > .66 ? '#f6bd16' : r > .4 ? '#43e0a0' : r > .2 ? '#37e1ff' : '#7c6cff'; }
     var lines = seg.map(function (s) {
       var r = s[4] / wmax;
-      return { coords: [[s[0], s[1]], [s[2], s[3]]],
+      return { coords: [[s[0], s[1]], [s[2], s[3]]], value: s[4],
         lineStyle: { width: 1.4 + 4.6 * r, color: segColor(r), opacity: .92 } };
     });
     return {
-      backgroundColor: '#fff', title: { text: '同行走廊流量', subtext: '彩色走廊线 + 动画流向', left: 'center', top: 6, textStyle: { fontSize: 15 }, subtextStyle: { fontSize: 11 } },
+      backgroundColor: '#fff', title: { text: '同行走廊流量', subtext: '彩色走廊线 + 动画流向 · 悬停高亮', left: 'center', top: 6, textStyle: { fontSize: 15 }, subtextStyle: { fontSize: 11 } },
       grid: { top: 50, bottom: 16, left: 12, right: 12 }, xAxis: ax, yAxis: ax,
+      tooltip: { trigger: 'item', formatter: function (p) { return p.value != null ? '走廊段 · 经过 ' + p.value + ' 辆车' : ''; } },
       series: [
         { type: 'scatter', symbolSize: 3, data: cam, itemStyle: { color: '#dde2ea' }, silent: true },
         { type: 'lines', coordinateSystem: 'cartesian2d', data: lines, polyline: false,
+          emphasis: { focus: 'self', lineStyle: { width: 6, color: '#ff2d7e', opacity: 1 } },
           effect: { show: true, period: 4, trailLength: .2, symbol: 'arrow', symbolSize: 5, color: 'rgba(20,28,55,.85)' } }
       ]
     };
@@ -80,20 +82,18 @@
     setTimeout(function () { resizeIn(sections[i]); }, DUR * 0.7);
     setTimeout(function () { locking = false; }, DUR + 80);
   }
-  // allow internal scroll inside .results / .combo-list before switching page
-  function scrollableUnder(t, dy) {
+  // when the wheel is over the dropdown / results, NEVER switch the page —
+  // let the list scroll; at its top/bottom edge nothing happens (no page jump)
+  function overList(t) {
     while (t && t !== document.body) {
-      if (t.classList && (t.classList.contains('results') || t.classList.contains('combo-list'))) {
-        var up = dy < 0 && t.scrollTop > 0;
-        var down = dy > 0 && t.scrollTop + t.clientHeight < t.scrollHeight - 1;
-        if (up || down) return true;
-      }
+      if (t.classList && (t.classList.contains('results') || t.classList.contains('combo-list')))
+        return true;
       t = t.parentElement;
     }
     return false;
   }
   window.addEventListener('wheel', function (e) {
-    if (scrollableUnder(e.target, e.deltaY)) return;   // let the inner list scroll
+    if (overList(e.target)) { e.stopPropagation(); return; }   // keep scroll inside the list
     e.preventDefault();
     if (locking) return;
     goTo(idx + (e.deltaY > 0 ? 1 : -1));
@@ -111,25 +111,46 @@
   window.addEventListener('keydown', function (e) {
     if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); goTo(idx + 1); }
     if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); goTo(idx - 1); }
-    if (idx === METHODS && e.key === 'ArrowRight') { e.preventDefault(); car.go(car.i + 1); }
-    if (idx === METHODS && e.key === 'ArrowLeft') { e.preventDefault(); car.go(car.i - 1); }
+    if (idx === METHODS && e.key === 'ArrowRight') { e.preventDefault(); car.move(1); }
+    if (idx === METHODS && e.key === 'ArrowLeft') { e.preventDefault(); car.move(-1); }
   });
   dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); }); });
 
   // ── methods carousel ──────────────────────────────────────────────────────
-  var car = { i: 0, n: 0, track: null,
-    go: function (j) {
-      this.n = this.track.children.length;
-      this.i = (j + this.n) % this.n;          // wrap (only 2 slides, arrows only)
+  // infinite loop carousel: clone first→end and last→start so wrapping always
+  // animates in the arrow's direction (prev on slide-1 → last slide from the left)
+  var car = { i: 1, real: 0, track: null, animating: false,
+    move: function (dir) {
+      if (this.animating) return;
+      this.animating = true;
+      this.i += dir;
+      this.track.style.transition = '';
       this.track.style.transform = 'translateX(-' + this.i * 100 + '%)';
-      resizeIn(sections[METHODS]);
     } };
+  function snap(toI) {
+    car.i = toI;
+    car.track.style.transition = 'none';
+    car.track.style.transform = 'translateX(-' + car.i * 100 + '%)';
+    car.track.offsetHeight;                  // force reflow
+    car.track.style.transition = '';
+  }
   function initCarousel() {
     car.track = document.querySelector('.car-track');
     if (!car.track) return;
-    car.n = car.track.children.length;
-    document.querySelector('.car-arrow.prev').addEventListener('click', function () { car.go(car.i - 1); });
-    document.querySelector('.car-arrow.next').addEventListener('click', function () { car.go(car.i + 1); });
+    var slides = [].slice.call(car.track.children);
+    car.real = slides.length;
+    if (car.real < 2) return;
+    car.track.appendChild(slides[0].cloneNode(true));                          // firstClone at end
+    car.track.insertBefore(slides[car.real - 1].cloneNode(true), slides[0]);   // lastClone at start
+    snap(1);                                  // start on the real first slide
+    document.querySelector('.car-arrow.prev').addEventListener('click', function () { car.move(-1); });
+    document.querySelector('.car-arrow.next').addEventListener('click', function () { car.move(1); });
+    car.track.addEventListener('transitionend', function () {
+      if (car.i === 0) snap(car.real);                    // on lastClone → real last
+      else if (car.i === car.real + 1) snap(1);           // on firstClone → real first
+      car.animating = false;
+      resizeIn(sections[METHODS]);
+    });
   }
 
   // ── seed-vehicle combobox ─────────────────────────────────────────────────
@@ -198,7 +219,7 @@
 
   // ── boot ──────────────────────────────────────────────────────────────────
   function boot() {
-    initCharts(); initCarousel(); initSeed();
+    initCarousel(); initCharts(); initSeed();   // clone slides before charts init
     goTo(0); resizeIn(sections[0]);
     var sp = location.search.match(/s=(\d+)/);   // ?s=N jumps instantly (for previews)
     if (sp) {
