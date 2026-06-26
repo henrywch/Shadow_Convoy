@@ -1,0 +1,30 @@
+name: Deploy Demo Site
+
+on:
+  push:
+    branches: [main, demo]
+    paths:
+      - 'demo/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Publishes demo/ into the gh-pages branch under /demo, served at
+      # https://<user>.github.io/Shadow_Convoy/demo/ . keep_files preserves the
+      # main pages/ site at the gh-pages root (and vice-versa).
+      - name: Deploy demo/ to gh-pages /demo
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./demo
+          publish_branch: gh-pages
+          destination_dir: demo
+          keep_files: true
+          commit_message: "deploy demo: ${{ github.event.head_commit.message }}"

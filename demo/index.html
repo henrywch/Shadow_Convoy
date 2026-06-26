@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shadow Convoy · 多视角同行车辆挖掘</title>
+<meta name="description" content="从 2.76 亿条卡口 ANPR 记录中挖掘同行车辆群体 —— 三检测器、共识融合与下游应用的在线演示。">
+<link rel="stylesheet" href="css/demo.css">
+</head>
+<body>
+
+<div class="progress"></div>
+<nav class="nav" aria-label="section navigation">
+  <a href="#hero" class="active"></a><a href="#intro"></a><a href="#methods"></a>
+  <a href="#union"></a><a href="#seed"></a><a href="#clone"></a><a href="#maps"></a>
+  <a href="#conclusion"></a><a href="#cta"></a>
+</nav>
+
+<!-- 0 · TITLE -->
+<section id="hero">
+  <div class="wrap">
+    <div class="kicker reveal">Big Data Mining · 卡口 ANPR</div>
+    <h1 class="reveal">Shadow&nbsp;Convoy<br><span class="grad">多视角同行车辆挖掘</span></h1>
+    <p class="lead reveal">从 <b>2.76&nbsp;亿</b> 条卡口抓拍中，用三种相互独立的度量空间挖掘"结伴同行"的车辆群体，
+      并以跨检测器一致性把三件研究原型沉淀为一个可查询的产品。</p>
+    <div class="hero-stats reveal">
+      <div class="s"><div class="v">275.9M</div><div class="l">卡口记录 · 31 天</div></div>
+      <div class="s"><div class="v">977</div><div class="l">相机（无 GPS）</div></div>
+      <div class="s"><div class="v">3</div><div class="l">独立检测器</div></div>
+      <div class="s"><div class="v">1,167</div><div class="l">融合同行组</div></div>
+    </div>
+  </div>
+  <div class="scrolldown">向下滚动 ↓</div>
+</section>
+
+<!-- 1 · INTRO -->
+<section id="intro">
+  <div class="wrap">
+    <div class="kicker reveal">01 · 问题背景</div>
+    <h2 class="reveal">什么是"同行"？三种答案。</h2>
+    <p class="lead reveal">城市卡口持续记录 <code>(车牌, 相机, 时间)</code>。在月级亿条尺度上，其中蕴含的是车辆之间的
+      <b>协同结构</b>——谁长期结伴、沿同一走廊成队移动。但"同行"本身没有唯一定义，因此我们并行构建三种检测器。</p>
+    <div class="defs">
+      <div class="def reveal"><b>FP-Growth · <span>格点共现</span></b><p class="note">同一 (相机×5 分钟) 格点反复同现 → 高精度、覆盖窄。</p></div>
+      <div class="def reveal"><b>MaxGrowth · <span>有向路径</span></b><p class="note">协同通过 ≥3 个相机的有向路径 → 强群体证据、带方向。</p></div>
+      <div class="def reveal"><b>Embedding · <span>轨迹向量</span></b><p class="note">256 维轨迹形状相近 + 真实共现确认 → 覆盖最广、可扩展。</p></div>
+    </div>
+    <div class="figwrap reveal">
+      <img src="img/pipeline.png" alt="系统总体流程">
+      <div class="figcap">系统总体流程：原始卡口数据 → 三检测器 → 共识融合登记表 → 下游任务</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · THREE METHODS -->
+<section id="methods">
+  <div class="wrap">
+    <div class="kicker reveal">02 · 三检测器结果</div>
+    <h2 class="reveal">三种方法，三种"同行"</h2>
+    <p class="lead reveal">三者按构造彼此分歧——这正是机会：被多个度量空间同时认可的群体，才是强证据。</p>
+    <div class="cards cols-3">
+      <div class="card reveal"><span class="tag">FP-Growth</span><h3>格点共现车队</h3>
+        <p>5,447 个车队 · 仅 783 个车牌（0.0036%）· 同行信号极稀疏。</p>
+        <div class="chart" data-chart="fpg_size"></div>
+        <div class="chart" data-chart="fpg_super"></div></div>
+      <div class="card reveal"><span class="tag">MaxGrowth</span><h3>有向路径模式</h3>
+        <p>223,184 个模式 · 87,047 个车牌 · 路径长度随相机数骤减。</p>
+        <div class="chart" data-chart="mg_routelen"></div>
+        <div class="chart" data-chart="mg_corridors"></div></div>
+      <div class="card reveal"><span class="tag">Embedding</span><h3>轨迹嵌入聚类</h3>
+        <p>3.83M×256 向量 · 12,709 个簇 · 4,041 个经共现确认。</p>
+        <div class="chart" data-chart="emb_confirm"></div>
+        <div class="chart" data-chart="emb_sizes"></div></div>
+    </div>
+    <div class="figwrap reveal" style="margin-top:34px">
+      <div class="chart tall" data-chart="detector_radar" style="max-width:680px;margin:0 auto"></div>
+      <div class="figcap">三检测器能力定性对比：精度 vs 覆盖 vs 有向性 vs 可扩展性</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · UNION -->
+<section id="union">
+  <div class="wrap">
+    <div class="kicker reveal">03 · 共识融合</div>
+    <h2 class="reveal">融合登记表 —— 关键一步</h2>
+    <p class="lead reveal">按"标签元组"将三套车队归并为一张去重、可置信排序的表。
+      <b>验证假设被数据推翻</b>：那些出现在 1,548 个车队里的"超级连接点"（公交/出租）<b>根本没进登记表</b>——
+      其余两个度量空间都不认可它们，融合自动将其过滤。</p>
+    <div class="cards cols-2" style="align-items:center">
+      <div class="card reveal"><div class="chart tall" data-chart="consensus_agree"></div></div>
+      <div class="card reveal">
+        <div class="bignum">1,167 <small>个融合同行组</small></div>
+        <table>
+          <tr><th>一致性</th><th>数量</th><th>含义</th></tr>
+          <tr><td><span class="badge">3-of-3</span></td><td class="num">19</td><td>三检测器一致 · 最强证据</td></tr>
+          <tr><td>2-of-3</td><td class="num">1,148</td><td>两检测器一致</td></tr>
+          <tr><td>最大组</td><td class="num">51 车</td><td>convoy∩path∩embed 3-of-3</td></tr>
+          <tr><td>超级连接点</td><td class="num">0</td><td>被融合自动剔除（公交/出租）</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · DOWNSTREAM: SEED QUERY -->
+<section id="seed">
+  <div class="wrap">
+    <div class="kicker reveal">04 · 下游应用 · 种子车查询</div>
+    <h2 class="reveal">"谁和这辆车一起走？"</h2>
+    <p class="lead reveal">真实刑侦工作流不是"导出所有车队"，而是<b>给定一辆已知车，找出它的伴随车</b>。
+      三路并行：融合登记表 · 嵌入 ANN 近邻 · 按需共现，多路一致者排名最高。</p>
+    <div class="seedbox reveal">
+      <input id="seedin" value="393966" aria-label="seed plate">
+      <button class="btn" onclick="runSeed()">查询伴随车</button>
+      <span class="note">已验证种子：393966</span>
+    </div>
+    <div id="seedout" class="results reveal"></div>
+  </div>
+</section>
+
+<!-- 5 · DOWNSTREAM: CLONE -->
+<section id="clone">
+  <div class="wrap">
+    <div class="kicker reveal">05 · 下游应用 · 套牌检测</div>
+    <h2 class="reveal">套牌车（impossible travel）</h2>
+    <p class="lead reveal">同行的对偶问题：一辆车若在过短时间内出现于过远的两地（短于相机图最短通行时间），即<b>物理不可能</b>。
+      全月标出 <b>221,132</b> 次不可能、<b>8,668</b> 个套牌候选——与 OCR 误读近乎不相交。</p>
+    <div class="cards cols-2" style="align-items:center">
+      <div class="card reveal"><div class="chart tall" data-chart="clone_rose"></div></div>
+      <div class="card reveal">
+        <div class="bignum">505029</div>
+        <p style="margin-top:8px">最强套牌候选：全月 <b style="color:#fff">108 次</b>不可能转移。
+          例如 <code>79→306</code> 仅隔 <b style="color:var(--pink)">1 秒</b>，而该路段最快通行需 <b>82 秒</b> —— 同一车牌的两辆车在同时移动。</p>
+        <div class="note">距离先验来自从数据恢复的相机转移图（全对最短通行时间），全程无 GPS。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · DOWNSTREAM: MAPS -->
+<section id="maps">
+  <div class="wrap">
+    <div class="kicker reveal">06 · 下游应用 · 无 GPS 地理</div>
+    <h2 class="reveal">从数据恢复城市走廊</h2>
+    <p class="lead reveal">相机只是 0…976 的整数编号。我们用车辆跳转构建相机转移图（853 节点、41 万边），
+      用 node2vec 嵌入恢复出二维地图，并把同行走廊的群体流量叠加其上。</p>
+    <div class="cards cols-2">
+      <div class="card reveal"><div class="figwrap" style="margin:0"><img src="img/camera_map.png" alt="recovered camera map"><div class="figcap">恢复的相机地图（node2vec → PCA 二维）</div></div></div>
+      <div class="card reveal"><div class="figwrap" style="margin:0"><img src="img/corridor_flow.png" alt="convoy flow map"><div class="figcap">同行走廊的群体流量地图</div></div></div>
+    </div>
+    <div class="figwrap reveal" style="margin-top:24px"><div class="chart" data-chart="od_pairs" style="max-width:820px;margin:0 auto"></div>
+      <div class="figcap">最繁忙的群体起讫（OD）对 —— 单看路径无法看到的流结构</div></div>
+  </div>
+</section>
+
+<!-- 7 · CONCLUSION -->
+<section id="conclusion">
+  <div class="wrap">
+    <div class="kicker reveal">07 · 结论</div>
+    <h2 class="reveal">一致性 &gt; 任何单检测器的 Top-K</h2>
+    <p class="lead reveal">三种互补的度量空间 + 跨检测器共识，把高频假阳性（公交/出租）自动过滤，
+      显著提升结果的可解释性与可信度；相机转移图又独立复现了路径检测器的走廊，多重证据相互印证。
+      全部下游产物均在 31 天全量数据上运行验证。</p>
+    <div class="cards cols-3" style="margin-top:30px">
+      <div class="card reveal"><div class="bignum">87,047</div><p>MaxGrowth 覆盖车牌（vs FP-Growth 783）</p></div>
+      <div class="card reveal"><div class="bignum">19</div><p>三检测器一致的强同行组</p></div>
+      <div class="card reveal"><div class="bignum">8,668</div><p>套牌候选车牌（0.04%）</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 · CTA -->
+<section id="cta">
+  <div class="wrap">
+    <div class="kicker reveal">08 · 代码与论文</div>
+    <h2 class="reveal">查看完整项目</h2>
+    <p class="lead reveal" style="margin:16px auto 0">全部三检测器、融合与下游任务的代码、文档与论文报告均在 GitHub 仓库。</p>
+    <div class="ctabtns reveal">
+      <a class="primary" href="https://github.com/henrywch/Shadow_Convoy" target="_blank" rel="noopener">前往 GitHub 仓库 →</a>
+      <a class="sec" href="https://henrywch.github.io/Shadow_Convoy/" target="_blank" rel="noopener">项目主页</a>
+    </div>
+    <p class="note" style="margin-top:34px">Shadow Convoy · Big Data Course Project · 2026</p>
+  </div>
+</section>
+
+<script src="js/echarts.min.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/demo.js"></script>
+</body>
+</html>

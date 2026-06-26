@@ -88,3 +88,23 @@ node_modules/
 data/
 output/
 .claude/
+
+# ── Large/derived binary artifacts (safety; mostly under data/) ──
+# Model weights, embedding matrices, ANN indexes, pickled caches — all
+# regenerable from the pipeline, never commit. Keeps the repo lean.
+*.pkl
+*.npy
+*.npz
+*.pt
+*.pth
+*.bin
+*.idx
+
+# ── Redundant figures superseded by the ECharts result charts ───
+# The report now uses doc/figures/charts/*.png (scripts/render_charts.py);
+# these matplotlib intermediates are orphaned and safe to remove.
+doc/figures/fig_route_len.png
+doc/figures/fig_corridors.png
+
+# NOTE: demo/js/echarts.min.js and demo/img/*.png are intentionally KEPT
+# (the deployed demo needs them offline; a CDN may be unreliable for CN users).

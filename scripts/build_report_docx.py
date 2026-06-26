@@ -39,8 +39,11 @@ def set_run_font(run, size, bold=False, east=BODY, west=WEST, color=None):
         run.font.color.rgb = color
 
 
-def add_runs_bold(p, text, size, east=BODY):
-    """Render inline **bold** and `code`; code spans use a monospace font."""
+LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
+
+
+def _emit(p, text, size, east):
+    """Render inline **bold** and `code` (no links)."""
     for bi, bold_seg in enumerate(text.split("**")):
         if bold_seg == "":
             continue
@@ -52,6 +55,32 @@ def add_runs_bold(p, text, size, east=BODY):
                 set_run_font(p.add_run(seg), size - 0.5, bold=bold, east=MONO, west=MONO)
             else:
                 set_run_font(p.add_run(seg), size, bold=bold, east=east)
+
+
+def add_hyperlink(p, url, text, size):
+    rid = p.part.relate_to(
+        url, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
+        is_external=True)
+    hl = OxmlElement("w:hyperlink"); hl.set(qn("r:id"), rid)
+    run = OxmlElement("w:r"); rpr = OxmlElement("w:rPr")
+    for tag, attr, val in [("w:color", "w:val", "0563C1"), ("w:u", "w:val", "single")]:
+        e = OxmlElement(tag); e.set(qn(attr), val); rpr.append(e)
+    rf = OxmlElement("w:rFonts")
+    rf.set(qn("w:ascii"), WEST); rf.set(qn("w:hAnsi"), WEST); rf.set(qn("w:eastAsia"), BODY); rpr.append(rf)
+    sz = OxmlElement("w:sz"); sz.set(qn("w:val"), str(int(size * 2))); rpr.append(sz)
+    run.append(rpr)
+    t = OxmlElement("w:t"); t.text = text; run.append(t)
+    hl.append(run); p._p.append(hl)
+
+
+def add_runs_bold(p, text, size, east=BODY):
+    """Render inline [text](url) links, **bold**, and `code`."""
+    pos = 0
+    for m in LINK.finditer(text):
+        _emit(p, text[pos:m.start()], size, east)
+        add_hyperlink(p, m.group(2), m.group(1), size)
+        pos = m.end()
+    _emit(p, text[pos:], size, east)
 
 
 def fmt_body(p, indent=True):
@@ -102,16 +131,41 @@ def add_table(doc, rows):
     doc.add_paragraph()
 
 
-def add_image(doc, caption, path):
+def add_image(doc, caption, path, width=12.5):
     fp = (REPO / path) if not Path(path).is_absolute() else Path(path)
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(8); p.paragraph_format.space_after = Pt(2)
     if fp.exists():
-        p.add_run().add_picture(str(fp), width=Cm(14))
+        p.add_run().add_picture(str(fp), width=Cm(width))
     else:
         set_run_font(p.add_run(f"[缺图: {path}]"), 10)
     cap = doc.add_paragraph(); cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    cap.paragraph_format.space_after = Pt(6)
+    cap.paragraph_format.space_after = Pt(10)
     set_run_font(cap.add_run(caption), 9)
+
+
+def add_grid(doc, caption, items):
+    """items: list of (path, subcaption); lay out 2 per row on a fresh page so the
+    whole method-results board stays together, borderless, then caption."""
+    doc.add_page_break()
+    n = len(items); cols = 2; rows = (n + cols - 1) // cols
+    t = doc.add_table(rows=rows * 2, cols=cols); t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    for row in t.rows:                                   # keep each row off page breaks
+        trPr = row._tr.get_or_add_trPr()
+        cant = OxmlElement("w:cantSplit"); trPr.append(cant)
+    for idx, (path, sub) in enumerate(items):
+        r, c = (idx // cols) * 2, idx % cols
+        fp = (REPO / path) if not Path(path).is_absolute() else Path(path)
+        cell = t.cell(r, c); cp = cell.paragraphs[0]; cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cp.paragraph_format.space_before = Pt(4); cp.paragraph_format.space_after = Pt(0)
+        if fp.exists():
+            cp.add_run().add_picture(str(fp), width=Cm(7.4))
+        scell = t.cell(r + 1, c); sp = scell.paragraphs[0]; sp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        sp.paragraph_format.space_after = Pt(6)
+        set_run_font(sp.add_run(sub), 8.5)
+    cap = doc.add_paragraph(); cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    cap.paragraph_format.space_before = Pt(2); cap.paragraph_format.space_after = Pt(10)
+    set_run_font(cap.add_run(caption), 9, bold=True)
 
 
 def add_code(doc, lines):
@@ -123,14 +177,15 @@ def add_code(doc, lines):
 
 
 def heading(doc, text, level):
-    sizes = {1: 16, 2: 14, 3: 13}
+    sizes = {1: 15, 2: 13.5}
+    before = {0: 6, 1: 20, 2: 14}        # more breathing room between sections
+    after = {0: 10, 1: 9, 2: 6}
     p = doc.add_paragraph(); pf = p.paragraph_format
-    pf.space_before = Pt(10 if level > 1 else 6); pf.space_after = Pt(4)
-    pf.line_spacing = Pt(22); pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+    pf.space_before = Pt(before.get(level, 14)); pf.space_after = Pt(after.get(level, 6))
+    pf.line_spacing = Pt(24); pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
     if level == 0:
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    set_run_font(p.add_run(text), sizes.get(level, 16) if level else 18,
-                 bold=True, east=HEAD)
+    set_run_font(p.add_run(text), sizes.get(level, 18) if level else 18, bold=True, east=HEAD)
 
 
 def build(md_path, out_path):
@@ -155,9 +210,18 @@ def build(md_path, out_path):
             while i < len(lines) and not lines[i].strip().startswith("```"):
                 block.append(lines[i]); i += 1
             add_code(doc, block); i += 1; continue
+        if s.startswith("@@grid|"):                              # image grid block
+            cap = s.split("|", 1)[1]; items = []; i += 1
+            while i < len(lines) and lines[i].strip() != "@@":
+                parts = lines[i].strip().split("|")
+                if len(parts) == 2:
+                    items.append((parts[0], parts[1]))
+                i += 1
+            add_grid(doc, cap, items); i += 1; continue
         m = re.match(r"^!\[(.*?)\]\((.*?)\)$", s)                # image
         if m:
-            add_image(doc, m.group(1), m.group(2)); i += 1; continue
+            w = 11.0 if "map" in m.group(2) or "flow" in m.group(2) else 12.5
+            add_image(doc, m.group(1), m.group(2), w); i += 1; continue
         if s.startswith("|"):                                    # table block
             block = []
             while i < len(lines) and lines[i].strip().startswith("|"):
