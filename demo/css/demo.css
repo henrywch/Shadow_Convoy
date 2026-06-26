@@ -64,10 +64,14 @@ h2{font-size:clamp(24px,3.2vw,38px);font-weight:800;margin-bottom:8px;letter-spa
 .car-viewport{overflow:hidden;border-radius:16px}
 .car-track{display:flex;transition:transform .45s cubic-bezier(.6,0,.2,1)}
 .slide{min-width:100%;padding:4px}
-.slide .card{margin:0 auto;max-width:560px}
-.slide .chart{height:26vh}
-.slide-radar{display:flex;justify-content:center}
-.slide-radar .chart{max-width:680px;height:50vh}
+/* slide 1: the 3 detectors side by side (compact) */
+.slide-methods .cards{margin-top:0}
+.slide-methods .card{padding:13px}
+.slide-methods .card p{font-size:12px;margin-bottom:4px}
+.slide-methods .chart{height:19vh}
+/* slide 2: radar alone */
+.slide-radar{display:flex;justify-content:center;align-items:center}
+.slide-radar .chart{max-width:680px;height:60vh}
 .car-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:44px;height:44px;
   border-radius:50%;border:1px solid var(--cyan);background:rgba(10,14,26,.7);color:var(--cyan);
   font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
@@ -92,6 +96,15 @@ td.num{font-variant-numeric:tabular-nums;color:#fff;font-weight:600}
 .combo-list{position:absolute;z-index:20;top:54px;left:0;right:0;max-height:230px;overflow-y:auto;
   background:#0b1120;border:1px solid var(--line);border-radius:10px;display:none}
 .combo-list.show{display:block}
+
+/* semi-transparent scrollbars, no up/down arrow buttons */
+.combo-list,.results{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent}
+.combo-list::-webkit-scrollbar,.results::-webkit-scrollbar{width:8px;height:8px}
+.combo-list::-webkit-scrollbar-track,.results::-webkit-scrollbar-track{background:transparent}
+.combo-list::-webkit-scrollbar-thumb,.results::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.22);border-radius:8px}
+.combo-list::-webkit-scrollbar-thumb:hover,.results::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.35)}
+.combo-list::-webkit-scrollbar-button,.results::-webkit-scrollbar-button{display:none;width:0;height:0}
 .combo-item{padding:9px 16px;cursor:pointer;font-size:15px;display:flex;gap:8px;align-items:center}
 .combo-item:hover,.combo-item.active{background:rgba(55,225,255,.12)}
 .combo-item .mini{font-size:10px;color:var(--muted)}
