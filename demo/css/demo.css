@@ -60,7 +60,7 @@ h2{font-size:clamp(24px,3.2vw,38px);font-weight:800;margin-bottom:8px;letter-spa
 .figcap{color:var(--muted);font-size:12px;margin-top:8px}
 
 /* methods carousel */
-.carousel{position:relative;margin-top:18px}
+.carousel{position:relative;margin:18px 54px 0}
 .car-viewport{overflow:hidden;border-radius:16px}
 .car-track{display:flex;transition:transform .45s cubic-bezier(.6,0,.2,1)}
 .slide{min-width:100%;padding:4px}
@@ -76,7 +76,7 @@ h2{font-size:clamp(24px,3.2vw,38px);font-weight:800;margin-bottom:8px;letter-spa
   border-radius:50%;border:1px solid var(--cyan);background:rgba(10,14,26,.7);color:var(--cyan);
   font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
 .car-arrow:hover{background:var(--cyan);color:var(--bg)}
-.car-arrow.prev{left:-6px}.car-arrow.next{right:-6px}
+.car-arrow.prev{left:-52px}.car-arrow.next{right:-52px}
 .car-dots{display:flex;gap:10px;justify-content:center;margin-top:14px}
 .car-dots button{width:9px;height:9px;border-radius:50%;border:none;background:rgba(255,255,255,.22);cursor:pointer;transition:.2s}
 .car-dots button.on{background:var(--cyan);transform:scale(1.4)}

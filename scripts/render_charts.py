@@ -95,6 +95,14 @@ CHARTS = {
  "od_pairs": hbar("走廊 OD 流：最繁忙的群体起讫对", "按经过的不同车牌数（前 8 个 OD 对）",
    ["434→238", "68→45", "391→372", "268→481", "434→29", "330→481", "297→437", "348→45"],
    [9300, 6775, 5859, 5442, 4493, 4005, 3536, 3523], PAL[7]),
+ # plate-level coverage comparison (log axis — FP-Growth is ~130× smaller)
+ "coverage": {"title": TITLE("各检测器覆盖的车牌数", "对数轴 · 同行人群覆盖对比"), "backgroundColor": "#fff",
+   "grid": {"left": 120, "right": 90, "top": 70, "bottom": 44},
+   "xAxis": {"type": "log", "min": 100, "name": "覆盖车牌数（对数）", "nameLocation": "middle", "nameGap": 28, **AXIS},
+   "yAxis": {"type": "category", "data": ["FP-Growth", "MaxGrowth", "Embedding"], **AXIS},
+   "series": [{"type": "bar", "data": [783, 87047, 102779], "barWidth": "52%",
+               "itemStyle": {"color": PAL[3], "borderRadius": [0, 4, 4, 0]},
+               "label": {"show": True, "position": "right", "color": "#333", "formatter": "{c} 车牌"}}]},
 }
 
 SIZES = {"detector_radar": (760, 560), "emb_confirm": (760, 520), "consensus_agree": (760, 520),

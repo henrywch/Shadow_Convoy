@@ -102,6 +102,41 @@ def build_mapdata():
     print(f"[demo-data] mapdata.js: {len(cameras)} cameras, {len(segs)} corridor segments")
 
 
+def build_embedding_projection():
+    """Plate-level 2-D projection: every point is one vehicle (embeddings.npy and
+    plates.npy are aligned row-by-row), colored by its embedding cluster. Proof
+    that the embedding result is at PLATE granularity, not just cluster aggregates."""
+    import numpy as np
+    from sklearn.manifold import TSNE
+    PAL = ["#5B8FF9", "#61DDAA", "#F6BD16", "#7262FD", "#78D3F8", "#F08BB4", "#FF9845", "#5AD8A6"]
+    vec = REPO / "data/output/embed_31/vectors"
+    plates = np.load(vec / "plates.npy")
+    row = {int(p): i for i, p in enumerate(plates)}
+    import csv as _csv
+    df = sorted(_csv.DictReader(open(REPO / "data/output/embed_31/fleets.csv")),
+                key=lambda r: -int(r["n_plates"]))
+    df = [r for r in df if str(r["confirmed"]).lower() == "true"][:8]
+    emb = np.load(vec / "embeddings.npy", mmap_mode="r")
+    groups = []
+    for r in df:
+        idxs = [row[int(p)] for p in r["members"].split(",") if int(p) in row][:320]
+        groups.append(idxs)
+    allidx = [i for g in groups for i in g]
+    sub = np.asarray(emb[sorted(set(allidx))], dtype="float32")
+    pos = {ri: k for k, ri in enumerate(sorted(set(allidx)))}
+    sub = sub / (np.linalg.norm(sub, axis=1, keepdims=True) + 1e-9)
+    xy = TSNE(n_components=2, init="pca", random_state=42).fit_transform(sub)
+    series = []
+    for ci, g in enumerate(groups):
+        data = [[round(float(xy[pos[i], 0]), 2), round(float(xy[pos[i], 1]), 2)] for i in g]
+        series.append({"name": "#" + df[ci]["cluster_id"], "color": PAL[ci % len(PAL)], "data": data})
+    js = "window.EMBDATA = " + json.dumps({"series": series}, ensure_ascii=False) + ";\n"
+    (OUT / "embdata.js").write_text(js, encoding="utf-8")
+    print(f"[demo-data] embdata.js: {len(series)} clusters, "
+          f"{sum(len(s['data']) for s in series)} plate points")
+
+
 if __name__ == "__main__":
     build_seeds()
     build_mapdata()
+    build_embedding_projection()

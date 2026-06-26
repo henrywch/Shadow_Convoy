@@ -105,6 +105,28 @@ def border(el, edge, sz="6", color="000000"):
     tcb.append(e)
 
 
+def shade(tcPr, fill="F5F6F8"):
+    shd = OxmlElement("w:shd"); shd.set(qn("w:val"), "clear")
+    shd.set(qn("w:fill"), fill); tcPr.append(shd)
+
+
+def cell_margins(cell, top=80, bottom=80, left=140, right=120):
+    tcPr = cell._tc.get_or_add_tcPr(); m = OxmlElement("w:tcMar")
+    for tag, val in [("top", top), ("bottom", bottom), ("start", left), ("end", right)]:
+        e = OxmlElement(f"w:{tag}"); e.set(qn("w:w"), str(val)); e.set(qn("w:type"), "dxa"); m.append(e)
+    tcPr.append(m)
+
+
+def fixed_widths(t, widths):
+    t.autofit = False; t.allow_autofit = False
+    tblPr = t._tbl.tblPr
+    layout = OxmlElement("w:tblLayout"); layout.set(qn("w:type"), "fixed"); tblPr.append(layout)
+    for row in t.rows:
+        for j, cell in enumerate(row.cells):
+            if j < len(widths):
+                cell.width = widths[j]
+
+
 def three_line(table):
     rows = table.rows
     for cell in rows[0].cells:
@@ -126,28 +148,34 @@ def add_table(doc, rows):
             p = cell.paragraphs[0]
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER if i == 0 else WD_ALIGN_PARAGRAPH.LEFT
             p.paragraph_format.line_spacing = Pt(18); p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+            p.paragraph_format.space_before = Pt(2); p.paragraph_format.space_after = Pt(2)
             add_runs_bold(p, val if "**" in val else (f"**{val}**" if i == 0 else val), 10.5)
+    if "签名" in cells[0]:                                   # member table → leave room to sign
+        fixed_widths(t, [Cm(2.0), Cm(2.6), Cm(8.4), Cm(2.4)])
     three_line(t)
-    doc.add_paragraph()
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
 
-def add_image(doc, caption, path, width=12.5):
+def add_image(doc, caption, path, width=11.5):
     fp = (REPO / path) if not Path(path).is_absolute() else Path(path)
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p.paragraph_format.space_before = Pt(8); p.paragraph_format.space_after = Pt(2)
+    pf = p.paragraph_format
+    pf.space_before = Pt(6); pf.space_after = Pt(2); pf.keep_with_next = True   # stay with caption
     if fp.exists():
         p.add_run().add_picture(str(fp), width=Cm(width))
     else:
         set_run_font(p.add_run(f"[缺图: {path}]"), 10)
     cap = doc.add_paragraph(); cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    cap.paragraph_format.space_after = Pt(10)
+    cap.paragraph_format.space_before = Pt(1); cap.paragraph_format.space_after = Pt(8)
     set_run_font(cap.add_run(caption), 9)
 
 
-def add_grid(doc, caption, items):
-    """items: list of (path, subcaption); lay out 2 per row on a fresh page so the
-    whole method-results board stays together, borderless, then caption."""
-    doc.add_page_break()
+def add_grid(doc, caption, items, page_break=True, img_w=7.4):
+    """items: list of (path, subcaption); lay out 2 per row, borderless, then caption.
+    page_break=True puts the block on a fresh page (the 6-panel board); False keeps
+    it inline (a 2-up row to pack figures and cut whitespace)."""
+    if page_break:
+        doc.add_page_break()
     n = len(items); cols = 2; rows = (n + cols - 1) // cols
     t = doc.add_table(rows=rows * 2, cols=cols); t.alignment = WD_TABLE_ALIGNMENT.CENTER
     for row in t.rows:                                   # keep each row off page breaks
@@ -159,7 +187,7 @@ def add_grid(doc, caption, items):
         cell = t.cell(r, c); cp = cell.paragraphs[0]; cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cp.paragraph_format.space_before = Pt(4); cp.paragraph_format.space_after = Pt(0)
         if fp.exists():
-            cp.add_run().add_picture(str(fp), width=Cm(7.4))
+            cp.add_run().add_picture(str(fp), width=Cm(img_w))
         scell = t.cell(r + 1, c); sp = scell.paragraphs[0]; sp.alignment = WD_ALIGN_PARAGRAPH.CENTER
         sp.paragraph_format.space_after = Pt(6)
         set_run_font(sp.add_run(sub), 8.5)
@@ -169,11 +197,23 @@ def add_grid(doc, caption, items):
 
 
 def add_code(doc, lines):
-    for ln in lines:
-        p = doc.add_paragraph(); pf = p.paragraph_format
-        pf.line_spacing = Pt(15); pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-        pf.left_indent = Pt(12); pf.space_before = Pt(0); pf.space_after = Pt(0)
-        set_run_font(p.add_run(ln if ln else " "), 10, east=MONO, west=MONO)
+    """Render a pseudocode block as a shaded, bordered, roomy code box."""
+    spacer = doc.add_paragraph(); spacer.paragraph_format.space_after = Pt(4)
+    spacer.paragraph_format.line_spacing = Pt(4); spacer.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+    t = doc.add_table(rows=1, cols=1); t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    cell = t.cell(0, 0); tcPr = cell._tc.get_or_add_tcPr()
+    shade(tcPr, "F5F6F8")
+    for e in ("top", "bottom", "left", "right"):
+        border(tcPr, e, "4", "C8CDD7")
+    cell_margins(cell, top=90, bottom=90, left=150, right=120)
+    for k, ln in enumerate(lines):
+        p = cell.paragraphs[0] if k == 0 else cell.add_paragraph()
+        pf = p.paragraph_format
+        pf.line_spacing = Pt(15.5); pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+        pf.space_before = Pt(0); pf.space_after = Pt(0)
+        set_run_font(p.add_run(ln if ln else " "), 10.5, east=MONO, west=MONO)
+    after = doc.add_paragraph(); after.paragraph_format.space_after = Pt(6)
+    after.paragraph_format.line_spacing = Pt(4); after.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
 
 
 def heading(doc, text, level):
@@ -210,18 +250,21 @@ def build(md_path, out_path):
             while i < len(lines) and not lines[i].strip().startswith("```"):
                 block.append(lines[i]); i += 1
             add_code(doc, block); i += 1; continue
-        if s.startswith("@@grid|"):                              # image grid block
+        if s.startswith("@@grid|") or s.startswith("@@row|"):     # image grid / inline 2-up row
+            is_row = s.startswith("@@row|")
             cap = s.split("|", 1)[1]; items = []; i += 1
             while i < len(lines) and lines[i].strip() != "@@":
                 parts = lines[i].strip().split("|")
                 if len(parts) == 2:
                     items.append((parts[0], parts[1]))
                 i += 1
-            add_grid(doc, cap, items); i += 1; continue
+            add_grid(doc, cap, items, page_break=not is_row, img_w=7.7 if is_row else 7.4)
+            i += 1; continue
         m = re.match(r"^!\[(.*?)\]\((.*?)\)$", s)                # image
         if m:
-            w = 11.0 if "map" in m.group(2) or "flow" in m.group(2) else 12.5
-            add_image(doc, m.group(1), m.group(2), w); i += 1; continue
+            p2 = m.group(2)
+            w = 10.0 if ("map" in p2 or "flow" in p2) else (10.5 if "demo_shots" in p2 else 11.5)
+            add_image(doc, m.group(1), p2, w); i += 1; continue
         if s.startswith("|"):                                    # table block
             block = []
             while i < len(lines) and lines[i].strip().startswith("|"):

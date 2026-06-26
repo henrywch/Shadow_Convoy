@@ -23,22 +23,33 @@
       };
     }
     var wmax = seg.reduce(function (m, s) { return Math.max(m, s[4]); }, 1);
+    function segColor(r) { return r > .66 ? '#f6bd16' : r > .4 ? '#43e0a0' : r > .2 ? '#37e1ff' : '#7c6cff'; }
     var lines = seg.map(function (s) {
-      return { coords: [[s[0], s[1]], [s[2], s[3]]], value: s[4],
-        lineStyle: { width: 1.2 + 4.5 * s[4] / wmax } };
+      var r = s[4] / wmax;
+      return { coords: [[s[0], s[1]], [s[2], s[3]]],
+        lineStyle: { width: 1.4 + 4.6 * r, color: segColor(r), opacity: .92 } };
     });
     return {
-      backgroundColor: '#fff', title: { text: '同行走廊流量', subtext: '静态走廊线 + 动画流向', left: 'center', top: 6, textStyle: { fontSize: 15 }, subtextStyle: { fontSize: 11 } },
+      backgroundColor: '#fff', title: { text: '同行走廊流量', subtext: '彩色走廊线 + 动画流向', left: 'center', top: 6, textStyle: { fontSize: 15 }, subtextStyle: { fontSize: 11 } },
       grid: { top: 50, bottom: 16, left: 12, right: 12 }, xAxis: ax, yAxis: ax,
-      visualMap: { show: false, min: 0, max: wmax, dimension: 2, inRange: { color: ['#7c6cff', '#37e1ff', '#43e0a0', '#ffc24b'] } },
       series: [
         { type: 'scatter', symbolSize: 3, data: cam, itemStyle: { color: '#dde2ea' }, silent: true },
         { type: 'lines', coordinateSystem: 'cartesian2d', data: lines, polyline: false,
-          lineStyle: { opacity: .85, curveness: 0 } },                                  // solid drawn corridors
-        { type: 'lines', coordinateSystem: 'cartesian2d', data: lines, polyline: false, silent: true,
-          effect: { show: true, period: 4, trailLength: .25, symbol: 'arrow', symbolSize: 5, color: 'rgba(20,30,60,.85)' },
-          lineStyle: { width: 0, opacity: 0 } }                                          // moving arrows on top
+          effect: { show: true, period: 4, trailLength: .2, symbol: 'arrow', symbolSize: 5, color: 'rgba(20,28,55,.85)' } }
       ]
+    };
+  }
+  function embOption() {
+    if (!window.EMBDATA) return null;
+    var ax = { show: false, scale: true, axisLine: { show: false }, splitLine: { show: false } };
+    return {
+      backgroundColor: '#fff',
+      title: { text: 'Embedding · 车牌级投影', subtext: '每点 = 一辆车，按车队着色', left: 'center', top: 6, textStyle: { fontSize: 14 }, subtextStyle: { fontSize: 10 } },
+      grid: { top: 46, bottom: 12, left: 10, right: 10 }, xAxis: ax, yAxis: ax,
+      series: window.EMBDATA.series.map(function (s) {
+        return { type: 'scatter', name: s.name, symbolSize: 4, data: s.data,
+          itemStyle: { color: s.color, opacity: .82 } };
+      })
     };
   }
   function initCharts() {
@@ -46,6 +57,7 @@
       var opt = null;
       if (el.dataset.chart) opt = window.CHARTS && window.CHARTS[el.dataset.chart];
       else if (el.dataset.mapchart) opt = mapOption(el.dataset.mapchart);
+      else if (el.dataset.embchart) opt = embOption();
       if (!opt) { el.innerHTML = '<p style="color:#888;padding:20px">缺图</p>'; return; }
       var c = echarts.init(el, null, { renderer: 'canvas' });
       c.setOption(opt); charts.push(c);
