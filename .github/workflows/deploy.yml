@@ -9,6 +9,12 @@ on:
 permissions:
   contents: write
 
+# Both deploy workflows push to the same gh-pages branch; this shared group
+# serializes them so they never race (the cause of "cannot lock ref gh-pages").
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

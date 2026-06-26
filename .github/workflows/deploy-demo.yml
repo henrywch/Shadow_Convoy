@@ -10,6 +10,12 @@ on:
 permissions:
   contents: write
 
+# Shared group with deploy.yml so the two never push to gh-pages at the same
+# time (fixes the "cannot lock ref gh-pages" race when one push touches both).
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy-demo:
     runs-on: ubuntu-latest
