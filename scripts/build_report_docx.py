@@ -40,10 +40,25 @@ def set_run_font(run, size, bold=False, east=BODY, west=WEST, color=None):
 
 
 LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
+CITE = re.compile(r"(\[\d+\])")               # inline reference marker, e.g. [12]
 
 
-def _emit(p, text, size, east):
-    """Render inline **bold** and `code` (no links)."""
+def _plain(p, seg, size, bold, east, cite):
+    """Emit a non-code text run; if cite, raise [n] markers to superscript."""
+    if not cite:
+        set_run_font(p.add_run(seg), size, bold=bold, east=east); return
+    for part in CITE.split(seg):
+        if part == "":
+            continue
+        if CITE.fullmatch(part):
+            r = p.add_run(part); set_run_font(r, size - 3, bold=bold, east=east)
+            r.font.superscript = True                         # citation as right-top superscript
+        else:
+            set_run_font(p.add_run(part), size, bold=bold, east=east)
+
+
+def _emit(p, text, size, east, cite=False):
+    """Render inline **bold**, `code`, and (optionally) [n] superscript citations."""
     for bi, bold_seg in enumerate(text.split("**")):
         if bold_seg == "":
             continue
@@ -54,7 +69,7 @@ def _emit(p, text, size, east):
             if ci % 2 == 1:                                   # inside backticks
                 set_run_font(p.add_run(seg), size - 0.5, bold=bold, east=MONO, west=MONO)
             else:
-                set_run_font(p.add_run(seg), size, bold=bold, east=east)
+                _plain(p, seg, size, bold, east, cite)
 
 
 def add_hyperlink(p, url, text, size):
@@ -73,14 +88,14 @@ def add_hyperlink(p, url, text, size):
     hl.append(run); p._p.append(hl)
 
 
-def add_runs_bold(p, text, size, east=BODY):
-    """Render inline [text](url) links, **bold**, and `code`."""
+def add_runs_bold(p, text, size, east=BODY, cite=False):
+    """Render inline [text](url) links, **bold**, `code`, and [n] citations."""
     pos = 0
     for m in LINK.finditer(text):
-        _emit(p, text[pos:m.start()], size, east)
+        _emit(p, text[pos:m.start()], size, east, cite)
         add_hyperlink(p, m.group(2), m.group(1), size)
         pos = m.end()
-    _emit(p, text[pos:], size, east)
+    _emit(p, text[pos:], size, east, cite)
 
 
 def fmt_body(p, indent=True):
@@ -196,6 +211,23 @@ def add_grid(doc, caption, items, page_break=True, img_w=7.4):
     set_run_font(cap.add_run(caption), 9, bold=True)
 
 
+def add_stack(doc, caption, paths, img_w=11.0):
+    """Stack images in one tight column (no inter-image whitespace), one caption."""
+    t = doc.add_table(rows=len(paths), cols=1); t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    for k, path in enumerate(paths):
+        trPr = t.rows[k]._tr.get_or_add_trPr(); trPr.append(OxmlElement("w:cantSplit"))
+        cell = t.cell(k, 0); cp = cell.paragraphs[0]; cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cp.paragraph_format.space_before = Pt(1); cp.paragraph_format.space_after = Pt(1)
+        fp = (REPO / path) if not Path(path).is_absolute() else Path(path)
+        if fp.exists():
+            cp.add_run().add_picture(str(fp), width=Cm(img_w))
+        else:
+            set_run_font(cp.add_run(f"[缺图: {path}]"), 10)
+    cap = doc.add_paragraph(); cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    cap.paragraph_format.space_before = Pt(2); cap.paragraph_format.space_after = Pt(8)
+    set_run_font(cap.add_run(caption), 9, bold=True)
+
+
 def add_code(doc, lines):
     """Render a pseudocode block as a shaded, bordered, roomy code box."""
     spacer = doc.add_paragraph(); spacer.paragraph_format.space_after = Pt(4)
@@ -260,6 +292,13 @@ def build(md_path, out_path):
                 i += 1
             add_grid(doc, cap, items, page_break=not is_row, img_w=7.7 if is_row else 7.4)
             i += 1; continue
+        if s.startswith("@@stack|"):                             # tight 1-column image stack
+            cap = s.split("|", 1)[1]; paths = []; i += 1
+            while i < len(lines) and lines[i].strip() != "@@":
+                if lines[i].strip():
+                    paths.append(lines[i].strip())
+                i += 1
+            add_stack(doc, cap, paths); i += 1; continue
         m = re.match(r"^!\[(.*?)\]\((.*?)\)$", s)                # image
         if m:
             p2 = m.group(2)
@@ -286,7 +325,7 @@ def build(md_path, out_path):
         # reference line or normal paragraph
         is_ref = bool(re.match(r"^\[\d+\]", s))
         p = doc.add_paragraph(); fmt_body(p, indent=not is_ref)
-        add_runs_bold(p, s, 12); cjk += count_cjk(s); i += 1
+        add_runs_bold(p, s, 12, cite=not is_ref); cjk += count_cjk(s); i += 1
 
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     doc.save(out_path)
